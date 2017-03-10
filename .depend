@@ -1,0 +1,10 @@
+MachineLang.cmi :
+parser.cmi : MachineLang.cmi
+MachineLang.cmo : MachineLang.cmi
+MachineLang.cmx : MachineLang.cmi
+lexer.cmo : parser.cmi
+lexer.cmx : parser.cmx
+mysplinterpreter.cmo : parser.cmi MachineLang.cmi lexer.cmo
+mysplinterpreter.cmx : parser.cmx MachineLang.cmx lexer.cmx
+parser.cmo : MachineLang.cmi parser.cmi
+parser.cmx : MachineLang.cmx parser.cmi
