@@ -22,3 +22,8 @@ setup.log
 # generated files
 
 example_parser.mly
+lexer.ml
+parser.ml
+parser.mli
+*.output
+mysplinterpreter
