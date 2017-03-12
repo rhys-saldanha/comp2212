@@ -27,3 +27,5 @@ parser.ml
 parser.mli
 *.output
 mysplinterpreter
+
+*.ini
