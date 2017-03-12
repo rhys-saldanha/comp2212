@@ -32,7 +32,7 @@ type typeContext = machType context
 type termContext = machTerm context
 
 let rec lookup env str = match env with
-	Env [] -> raise LookupError
+	| Env [] -> raise LookupError
 	| Env ((name, item) :: gs) ->
 		( match (name = str) with
 			true -> item
@@ -42,7 +42,7 @@ let rec lookup env str = match env with
 
 (* Function to add entry to enviroment *)
 let rec typeOf env e = match e with
-	MtNum n -> MachInt
+	| MtNum n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
 	| MtOpp (a, b, x) ->
@@ -55,3 +55,6 @@ let rec typeOf env e = match e with
 ;;
 
 let typeProg e = typeOf (Env []) e ;;
+
+let rec bigEval e = match e with
+	| 

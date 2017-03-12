@@ -28,16 +28,16 @@
 %type <MachineLang.machType> type_spec
 %%
 type_spec: FUNCTYPE type_spec type_spec		{ MachFunc ($2, $3) }
-	|	WORDTYPE							{ MachWord }
-	|	LANGTYPE							{ MachLang }
-	|	INTTYPE								{ MachInt }
+	| WORDTYPE								{ MachWord }
+	| LANGTYPE								{ MachLang }
+	| INTTYPE								{ MachInt }
 ;
 
 parser_main: expr EOL { $1 }
 ;
-expr: 	WORD						{ MtWord $1 }
-	|	LANG						{ MtLang $1 }
-	|	INT							{ MtNum $1 }
-	|	PREFIX expr expr			{ MtOpp ($2,$3,MachPrefix) }
-	|	UNION expr expr				{ MtOpp ($2,$3,MachUnion) }
-	|	INSEC expr expr				{ MtOpp ($2,$3,MachInsec) }
+expr: WORD						{ MtWord $1 }
+	| LANG						{ MtLang $1 }
+	| INT						{ MtNum $1 }
+	| PREFIX expr expr			{ MtOpp ($2,$3,MachPrefix) }
+	| UNION expr expr			{ MtOpp ($2,$3,MachUnion) }
+	| INSEC expr expr			{ MtOpp ($2,$3,MachInsec) }
