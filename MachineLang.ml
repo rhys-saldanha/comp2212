@@ -14,9 +14,9 @@ type machOpp = MachUnion | MachPrefix | MachInsec
 type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
 
 (* Grammar of machineLang *)
-type machTerm = MtWord of string
+type machTerm = MtNum of int
+	| MtWord of string
 	| MtLang of string
-	| MtNum of int
 	| MtOpp of machTerm * machTerm * machOpp
 
 let rec isValue e = match e with
@@ -35,7 +35,7 @@ let rec lookup env str = match env with
 	| Env [] -> raise LookupError
 	| Env ((name, item) :: gs) ->
 		( match (name = str) with
-			true -> item
+			| true -> item
 			| false -> lookup (Env (gs)) str
 		)
 ;;
@@ -47,9 +47,9 @@ let rec typeOf env e = match e with
 	| MtLang l -> MachLang
 	| MtOpp (a, b, x) ->
 		( match (typeOf env a) , (typeOf env b) , x with
-			MachWord, MachLang, MachPrefix -> MachLang
-			|	MachLang, MachLang, MachUnion -> MachLang
-			|	MachLang, MachLang, MachInsec -> MachLang
+			| MachWord, MachLang, MachPrefix -> MachLang
+			| MachLang, MachLang, MachUnion -> MachLang
+			| MachLang, MachLang, MachInsec -> MachLang
 			| _ -> raise TypeError
 		)
 ;;
