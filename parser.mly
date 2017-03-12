@@ -13,7 +13,7 @@
 
 %token WORDTYPE LANGTYPE INTTYPE
 %token FUNCTYPE
-%token EOL EOF
+%token EOL
 
 /* lowest precedence */
 

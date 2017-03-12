@@ -1,16 +1,17 @@
 (* MachineLang lexer *)
 {
 	open Parser			(* the type token will be defined in parser.mly *)
+	exception Eof
 }
 
 rule lexer_main = parse
-		[' ' '\t']						{ lexer_main lexbuf }	(* skip blanks *)
-	|	['\n' ]  { EOL }
+		[' ' '\t' '\n']						{ lexer_main lexbuf }	(* skip blanks *)
+	|	[';' ] 								{ EOL }
 	|	['0'-'9']+ as lxm 					{ INT (int_of_string lxm) }
-	|	('{')(['"']['a'-'z']*['"'])([',']['"']['a'-'z']*['"'])*('}') as lxm { LANG lxm }
+	|	(['{'][' ' '\t']*)(['"']['a'-'z']*['"'][' ' '\t']*)([','][' ' '\t']*['"']['a'-'z']*['"'])*('}') as lxm { LANG lxm }
 	|	['"']['a'-'z']+['"'] as lxm 		{ WORD lxm }
 	|	"prefix"							{ PREFIX }
 	|	"union"								{ UNION }
 	|	"insec"								{ INSEC }
-	|	eof									{ EOF }
+    |	eof      							{ raise Eof }
 	
