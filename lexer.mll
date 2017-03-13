@@ -13,5 +13,6 @@ rule lexer_main = parse
 	| "prefix"								{ PREFIX }
 	| "union"								{ UNION }
 	| "insec"								{ INSEC }
+	| "concat"								{ CONCAT }
     | eof      								{ raise Eof }
 	

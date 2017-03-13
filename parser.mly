@@ -7,9 +7,7 @@
 %token <string> LANG
 %token <int> INT
 
-%token PREFIX
-%token UNION
-%token INSEC
+%token PREFIX UNION INSEC CONCAT
 
 %token WORDTYPE LANGTYPE INTTYPE
 %token FUNCTYPE
@@ -41,3 +39,4 @@ expr: WORD						{ MtWord $1 }
 	| PREFIX expr expr			{ MtOpp ($2,$3,MachPrefix) }
 	| UNION expr expr			{ MtOpp ($2,$3,MachUnion) }
 	| INSEC expr expr			{ MtOpp ($2,$3,MachInsec) }
+	| CONCAT expr expr			{ MtOpp ($2,$3,MachConcat) }
