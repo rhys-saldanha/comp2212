@@ -4,7 +4,7 @@
 %}
 
 %token <string> WORD
-%token <string> LANG
+%token LBEGIN COMMA LEND
 %token <int> INT
 
 %token PREFIX
@@ -19,7 +19,6 @@
 
 %nonassoc PREFIX UNION INSEC
 %nonassoc WORD
-%nonassoc LANG
 
 /* highest precedence */
 
@@ -36,8 +35,14 @@ type_spec: FUNCTYPE type_spec type_spec		{ MachFunc ($2, $3) }
 parser_main: expr EOL { $1 }
 ;
 expr: WORD						{ MtWord $1 }
-	| LANG						{ MtLang $1 }
+	| langexpr					{ $1 }
 	| INT						{ MtNum $1 }
 	| PREFIX expr expr			{ MtOpp ($2,$3,MachPrefix) }
 	| UNION expr expr			{ MtOpp ($2,$3,MachUnion) }
 	| INSEC expr expr			{ MtOpp ($2,$3,MachInsec) }
+;
+langexpr: LBEGIN LEND			{ MtLang [] }
+	| LBEGIN WORD LEND			{ MtLang ($2::[]) }
+	| WORD COMMA langexpr 		{ MtLang ($1::$3) }
+	| WORD LEND					{ MtLang ($1::[]) }
+;
