@@ -16,7 +16,7 @@ type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
 (* Grammar of machineLang *)
 type machTerm = MtNum of int
 	| MtWord of string
-	| MtLang of string
+	| MtLang of string list
 	| MtOpp of machTerm * machTerm * machOpp
 
 let rec isValue e = match e with
@@ -67,20 +67,24 @@ let comp_concat l1 l2 = l2;;
 
 let rec bigEval e = match e with
 	| e when (isValue e) -> e
-	| MtOpp (a, b, x) ->	let aEval = bigEval a in
-							let bEval = bigEval b in
-								( match aEval,bEval,x with
-									| MtWord(w),MtLang(l),MachPrefix -> MtLang(comp_prefix w l)
-									| MtLang(l1),MtLang(l2),MachUnion -> MtLang(comp_union l1 l2)
-									| MtLang(l1),MtLang(l2),MachInsec -> MtLang(comp_insec l1 l2)
-									| MtLang(l1),MtLang(l2),MachConcat -> MtLang(comp_concat l1 l2)
-									| _ -> raise StuckTerm
-								)
+	| MtOpp(e1,e2,x) -> let v1 = bigEval e1 and v2 = bigEval e2 in
+		( match x with
+			| MachPrefix -> MtLang(comp_prefix v1 v2)
+			| MachUnion -> MtLang(comp_union v1 v2)
+			| MachInsec -> MtLang(comp_insec v1 v2)
+			| MachConcat -> MtLang(comp_concat v1 v2)
+		)
 	| _ -> raise StuckTerm
+;;
+
+let rec print_list l = match l with 
+	| [] -> print_string "[]"
+	| h::[] -> print_string h
+	| h::t -> print_string h ; print_string " " ; print_list t
 ;;
 
 let print_res res = match res with
     | (MtNum n) -> print_int n ; print_string " : Int" 
-    | (MtWord w) -> print_string w ; print_string " : Word"
-    | (MtLang l) -> print_string l ; print_string " : Language"
+	| (MtWord w) -> print_string w; print_string " : Word"
+    | (MtLang l) -> print_list l ; print_string " : List"
     | _ -> raise NonBaseTypeResult

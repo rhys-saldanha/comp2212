@@ -6,9 +6,12 @@
 
 rule lexer_main = parse
 	  [' ' '\t' '\n']						{ lexer_main lexbuf }	(* skip blanks *)
-	| [';' ] 								{ EOL }
+	| [';'] 								{ EOL }
 	| ['0'-'9']+ as lxm 					{ INT (int_of_string lxm) }
-	| (['{'][' ' '\t' 'n']*)(['"']['a'-'z']*['"'][' ' '\t']*)([','][' ' '\t' 'n']*['"']['a'-'z']*['"'])*('}') as lxm { LANG lxm }
+(*	| (['{'][' ' '\t' 'n']* )(['"']['a'-'z']*['"'][' ' '\t']* )([','][' ' '\t' 'n']*['"']['a'-'z']*['"'])*('}') as lxm { LANG lxm } *)
+	| '{'									{ LBEGIN }
+	| '}'									{ LEND }
+	| ','									{ COMMA }
 	| ['"']['a'-'z']+['"'] as lxm 			{ WORD lxm }
 	| "prefix"								{ PREFIX }
 	| "union"								{ UNION }
