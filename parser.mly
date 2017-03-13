@@ -1,6 +1,7 @@
 /* MachineLang parser */
 %{
 	open MachineLang
+	open Str
 %}
 
 %token <string> WORD
@@ -42,7 +43,8 @@ expr: WORD						{ MtWord $1 }
 	| INSEC expr expr			{ MtOpp ($2,$3,MachInsec) }
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }
-	| LBEGIN WORD LEND			{ MtLang ($2::[]) }
-	| WORD COMMA langexpr 		{ MtLang ($1::$3) }
-	| WORD LEND					{ MtLang ($1::[]) }
+	| LBEGIN stringexpr LEND	{ MtLang $2 }
+;
+stringexpr: WORD				{ [(global_replace (regexp "\"") "" $1)] }
+	| WORD COMMA stringexpr		{ (global_replace (regexp "\"") "" $1)::$3 }
 ;
