@@ -20,7 +20,7 @@ while true do
 	let () = print_string "Program Parsed" ; print_newline() in
 	let _ = typeProg parsedProg in
 	let () = print_string "Program Type Checked" ; print_newline() in
-	(* let result3 = bigEval parsedProg in
-	let () = print_string "Program Evaluated using big step semantics to ==> " ;  print_res result3 ; print_newline() in *)
+	let result3 = bigEval parsedProg in
+	let () = print_string "Program Evaluated using big step semantics to ==> " ;  print_res result3 ; print_newline() in
 		flush stdout
 done

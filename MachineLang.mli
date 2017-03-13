@@ -11,3 +11,5 @@ type machTerm = MtNum of int
 	| MtOpp of machTerm * machTerm * machOpp
 	
 val typeProg : machTerm -> machType
+val bigEval : machTerm -> machTerm
+val print_res : machTerm -> unit

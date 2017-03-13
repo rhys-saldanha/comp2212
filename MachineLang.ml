@@ -56,5 +56,31 @@ let rec typeOf env e = match e with
 
 let typeProg e = typeOf (Env []) e ;;
 
+let comp_prefix l1 l2 = l2;;
+
+let comp_union l1 l2 = l2;;
+
+let comp_insec l1 l2 = l2;;
+
 let rec bigEval e = match e with
-	| 
+	| e when (isValue e) -> e
+	| MtOpp(e1,e2,x) -> let v1 = bigEval e1 and v2 = bigEval e2 in
+		( match x with
+			| MachPrefix -> comp_prefix v1 v2
+			| MachUnion -> comp_union v1 v2
+			| MachInsec -> comp_insec v1 v2
+		)
+	| _ -> raise StuckTerm
+;;
+
+let rec print_list l = match l with 
+	| [] -> print_string "[]"
+	| h::[] -> print_string h
+	| h::t -> print_string h ; print_string " " ; print_list t
+;;
+
+let print_res res = match res with
+    | (MtNum n) -> print_int n ; print_string " : Int" 
+	| (MtWord w) -> print_string w; print_string " : Word"
+    | (MtLang l) -> print_list l ; print_string " : List"
+    | _ -> raise NonBaseTypeResult
