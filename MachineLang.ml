@@ -65,29 +65,33 @@ let rec sublist l n = match l,n with
 	| [],_ -> []
 ;;
 
+let rec uniq l = match l with
+	| h::t -> h::uniq(filter (fun x -> x<>h) t)
+	| [] -> []
+;;
+
+let sort_uniq c l = sort c (uniq l);;
+
 let tidy_lang l n = 
-	let r = ref [] in
-	r := sort_uniq compare l;
-	r := sublist !r n;
-	!r
+	sublist (sort_uniq compare l) n
 ;;
 
 let comp_prefix w l n =
-	let r = ref [] in 
-	r := tidy_lang l n;
-	r := List.map (fun x -> w^x) !r;
-	tidy_lang !r n
+	tidy_lang (List.map (fun x -> w^x) l) n
 ;;
 
-let comp_union l1 l2 n = 
-	let r1 = ref [] and r2 = ref [] in
-	r1 := tidy_lang l1 n;
-	r2 := tidy_lang l2 n;
-	r1 := !r1 @ !r2;
-	tidy_lang !r1 n
+let comp_union l1 l2 n =
+	tidy_lang (l1 @ l2) n
 ;;
 
-let comp_insec l1 l2 n = l2;;
+let rec insec l1 l2 = match l1 with
+	| h::t -> (filter (fun x -> x=h) l2) @ insec t l2
+	| [] -> []
+;;
+
+let comp_insec l1 l2 n = 
+	tidy_lang (insec l1 l2) n
+;;
 
 let comp_concat l1 l2 n = l2;;
 
@@ -105,13 +109,13 @@ let rec bigEval e = match e with
 ;;
 
 let rec print_list l = match l with 
-	| [] -> print_string "[]"
+	| [] -> print_string ""
 	| h::[] -> print_string h
-	| h::t -> print_string h ; print_string ";" ; print_list t
+	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
 
 let print_res res = match res with
     | (MtNum n) -> print_int n ; print_string " : Int" 
 	| (MtWord w) -> print_string w; print_string " : Word"
-    | (MtLang l) -> print_list l ; print_string " : List"
+    | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List"
     | _ -> raise NonBaseTypeResult

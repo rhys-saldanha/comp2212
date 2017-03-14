@@ -1,7 +1,6 @@
 /* MachineLang parser */
 %{
 	open MachineLang
-	open Str
 %}
 
 %token <string> WORD
@@ -33,7 +32,7 @@ type_spec: FUNCTYPE type_spec type_spec		{ MachFunc ($2, $3) }
 
 parser_main: expr EOL { $1 }
 ;
-expr: WORD						{ MtWord (global_replace (regexp "\"") "" $1) }
+expr: WORD						{ MtWord $1 }
 	| langexpr					{ $1 }
 	| INT						{ MtNum $1 }
 	| PREFIX expr expr expr		{ MtOpp ($2,$3,$4,MachPrefix) }
@@ -45,6 +44,6 @@ expr: WORD						{ MtWord (global_replace (regexp "\"") "" $1) }
 langexpr: LBEGIN LEND			{ MtLang [] }
 	| LBEGIN stringexpr LEND	{ MtLang $2 }
 ;
-stringexpr: WORD				{ [(global_replace (regexp "\"") "" $1)] }
-	| WORD COMMA stringexpr		{ (global_replace (regexp "\"") "" $1)::$3 }
+stringexpr: WORD				{ [$1] }
+	| WORD COMMA stringexpr		{ $1::$3 }
 ;
