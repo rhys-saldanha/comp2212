@@ -33,13 +33,13 @@ type_spec: FUNCTYPE type_spec type_spec		{ MachFunc ($2, $3) }
 
 parser_main: expr EOL { $1 }
 ;
-expr: WORD						{ MtWord $1 }
+expr: WORD						{ MtWord (global_replace (regexp "\"") "" $1) }
 	| langexpr					{ $1 }
 	| INT						{ MtNum $1 }
-	| PREFIX expr expr			{ MtOpp ($2,$3,MachPrefix) }
-	| UNION expr expr			{ MtOpp ($2,$3,MachUnion) }
-	| INSEC expr expr			{ MtOpp ($2,$3,MachInsec) }
-	| CONCAT expr expr			{ MtOpp ($2,$3,MachConcat) }
+	| PREFIX expr expr expr		{ MtOpp ($2,$3,$4,MachPrefix) }
+	| UNION expr expr expr		{ MtOpp ($2,$3,$4,MachUnion) }
+	| INSEC expr expr expr		{ MtOpp ($2,$3,$4,MachInsec) }
+	| CONCAT expr expr expr		{ MtOpp ($2,$3,$4,MachConcat) }
 
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }

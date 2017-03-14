@@ -6,6 +6,8 @@ exception StuckTerm ;;
 exception NonBaseTypeResult;;
 
 open Printf;;
+open List;;
+open String;;
 
 (* Types for opperations *)
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat
@@ -17,7 +19,7 @@ type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
 type machTerm = MtNum of int
 	| MtWord of string
 	| MtLang of string list
-	| MtOpp of machTerm * machTerm * machOpp
+	| MtOpp of machTerm * machTerm * machTerm * machOpp
 
 let rec isValue e = match e with
 	| MtNum n -> true
@@ -45,34 +47,59 @@ let rec typeOf env e = match e with
 	| MtNum n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
-	| MtOpp (a, b, x) ->
-		( match (typeOf env a),(typeOf env b),x with
-			| MachWord, MachLang, MachPrefix -> MachLang
-			| MachLang, MachLang, MachUnion -> MachLang
-			| MachLang, MachLang, MachInsec -> MachLang
-			| MachLang, MachLang, MachConcat -> MachLang
+	| MtOpp (a, b, n, x) ->
+		( match (typeOf env a),(typeOf env b),(typeOf env n),x with
+			| MachWord, MachLang, MachInt, MachPrefix -> MachLang
+			| MachLang, MachLang, MachInt, MachUnion -> MachLang
+			| MachLang, MachLang, MachInt, MachInsec -> MachLang
+			| MachLang, MachLang, MachInt, MachConcat -> MachLang
 			| _ -> raise TypeError
 		)
 ;;
 
 let typeProg e = typeOf (Env []) e ;;
 
-let comp_prefix w l = l;;
+let rec sublist l n = match l,n with
+	| _, 0 -> []
+	| h::t, _ -> h::sublist t (n-1)
+	| [],_ -> []
+;;
 
-let comp_union l1 l2 = l2;;
+let tidy_lang l n = 
+	let r = ref [] in
+	r := sort_uniq compare l;
+	r := sublist !r n;
+	!r
+;;
 
-let comp_insec l1 l2 = l2;;
+let comp_prefix w l n =
+	let r = ref [] in 
+	r := tidy_lang l n;
+	r := List.map (fun x -> w^x) !r;
+	tidy_lang !r n
+;;
 
-let comp_concat l1 l2 = l2;;
+let comp_union l1 l2 n = 
+	let r1 = ref [] and r2 = ref [] in
+	r1 := tidy_lang l1 n;
+	r2 := tidy_lang l2 n;
+	r1 := !r1 @ !r2;
+	tidy_lang !r1 n
+;;
+
+let comp_insec l1 l2 n = l2;;
+
+let comp_concat l1 l2 n = l2;;
 
 let rec bigEval e = match e with
 	| e when (isValue e) -> e
-	| MtOpp(e1,e2,x) -> let v1 = bigEval e1 and v2 = bigEval e2 in
-		( match x with
-			| MachPrefix -> MtLang(comp_prefix v1 v2)
-			| MachUnion -> MtLang(comp_union v1 v2)
-			| MachInsec -> MtLang(comp_insec v1 v2)
-			| MachConcat -> MtLang(comp_concat v1 v2)
+	| MtOpp(e1,e2,i,x) -> let v1 = bigEval e1 and v2 = bigEval e2 and v3 = bigEval i in
+		( match v1,v2,v3,x with
+			| MtWord(w),MtLang(l),MtNum(n),MachPrefix -> MtLang(comp_prefix w l n)
+			| MtLang(l1),MtLang(l2),MtNum(n),MachUnion -> MtLang(comp_union l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtNum(n),MachInsec -> MtLang(comp_insec l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtNum(n),MachConcat -> MtLang(comp_concat l1 l2 n)
+			| _ -> raise StuckTerm
 		)
 	| _ -> raise StuckTerm
 ;;

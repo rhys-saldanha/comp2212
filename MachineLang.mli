@@ -8,7 +8,7 @@ type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
 type machTerm = MtNum of int
 	| MtWord of string
 	| MtLang of string list
-	| MtOpp of machTerm * machTerm * machOpp
+	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	
 val typeProg : machTerm -> machType
 val bigEval : machTerm -> machTerm
