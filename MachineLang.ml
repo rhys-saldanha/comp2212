@@ -80,7 +80,7 @@ let rec bigEval e = match e with
 let rec print_list l = match l with 
 	| [] -> print_string "[]"
 	| h::[] -> print_string h
-	| h::t -> print_string h ; print_string " " ; print_list t
+	| h::t -> print_string h ; print_string ";" ; print_list t
 ;;
 
 let print_res res = match res with
