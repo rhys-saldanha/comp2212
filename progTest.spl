@@ -1,2 +1,0 @@
-union {"abc","def","ghi"} {"asdf","sdfe","aaaaaa"} 3;
-prefix "nick" {"smells","isweird"} 2;
