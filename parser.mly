@@ -7,7 +7,7 @@
 %token LBEGIN COMMA LEND
 %token <int> INT
 
-%token PREFIX UNION INSEC CONCAT
+%token PREFIX UNION INSEC CONCAT STAR
 
 %token WORDTYPE LANGTYPE INTTYPE
 %token FUNCTYPE
@@ -15,7 +15,7 @@
 
 /* lowest precedence */
 
-%nonassoc PREFIX UNION INSEC
+%nonassoc PREFIX UNION INSEC CONCAT STAR
 %nonassoc WORD
 
 /* highest precedence */
@@ -39,6 +39,7 @@ expr: WORD						{ MtWord $1 }
 	| UNION expr expr expr		{ MtOpp ($2,$3,$4,MachUnion) }
 	| INSEC expr expr expr		{ MtOpp ($2,$3,$4,MachInsec) }
 	| CONCAT expr expr expr		{ MtOpp ($2,$3,$4,MachConcat) }
+	| expr STAR					{ MtOpp ($1,MachStar) }
 
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }

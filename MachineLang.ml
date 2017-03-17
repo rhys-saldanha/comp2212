@@ -1,6 +1,5 @@
 exception LookupError ;;
-exception TypeError ;;
-exception UnboundVariableError;;
+exception TypeError of string;;
 exception Terminated ;;
 exception StuckTerm ;;
 exception NonBaseTypeResult;;
@@ -10,7 +9,7 @@ open List;;
 open String;;
 
 (* Types for opperations *)
-type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat
+type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar
 
 (*Types of machineLang *)
 type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
@@ -41,23 +40,46 @@ let rec lookup env str = match env with
 			| false -> lookup (Env (gs)) str
 		)
 ;;
+let typeToString x = match x with 
+	| MachInt -> "Int"
+	| MachWord -> "Word"
+	| MachLang -> "Language"
+	| _ -> "Unknown type"
+;;
+
+let makeTypeError x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
 
 (* Function to add entry to enviroment *)
-let rec typeOf env e = match e with
+let rec typeOf e = match e with
 	| MtNum n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
 	| MtOpp (a, b, n, x) ->
-		( match (typeOf env a),(typeOf env b),(typeOf env n),x with
-			| MachWord, MachLang, MachInt, MachPrefix -> MachLang
-			| MachLang, MachLang, MachInt, MachUnion -> MachLang
-			| MachLang, MachLang, MachInt, MachInsec -> MachLang
-			| MachLang, MachLang, MachInt, MachConcat -> MachLang
-			| _ -> raise TypeError
+		( match x with
+			| MachPrefix ->
+				( match (typeOf a),(typeOf b),(typeOf n) with
+					| MachWord, MachLang, MachInt -> MachLang
+					| x,y,z -> raise (TypeError ("Prefix was expecting (Word, Language, Int), received \n" ^ makeTypeError x y z))
+				)
+			| MachUnion ->
+				( match (typeOf a),(typeOf b),(typeOf n) with
+					| MachLang, MachLang, MachInt -> MachLang
+					| x,y,z -> raise (TypeError ("Union was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+				)
+			| MachInsec ->
+				( match (typeOf a),(typeOf b),(typeOf n) with
+					| MachLang, MachLang, MachInt -> MachLang
+					| x,y,z -> raise (TypeError ("Insec was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+				)
+			| MachConcat ->
+				( match (typeOf a),(typeOf b),(typeOf n) with
+					| MachLang, MachLang, MachInt -> MachLang
+					| x,y,z -> raise (TypeError ("Concat was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+				)
 		)
 ;;
 
-let typeProg e = typeOf (Env []) e ;;
+let typeProg e = typeOf e ;;
 
 let rec sublist l n = match l,n with
 	| _, 0 -> []
@@ -84,7 +106,7 @@ let comp_union l1 l2 n =
 	tidy_lang (l1 @ l2) n
 ;;
 
-let rec insec l1 l2 = match l1 with
+let rec insec l1 l2cl = match l1 with
 	| h::t -> (filter (fun x -> x=h) l2) @ insec t l2
 	| [] -> []
 ;;
