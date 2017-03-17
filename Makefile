@@ -3,7 +3,7 @@
 #
 # Type
 #   make         to rebuild the executable file c
-#   make clean   to remove all intermediate and temporary files
+#   make clear   to remove all intermediate and temporary files
 #   make depend  to rebuild the intermodule dependency graph that is used
 #                  by make to determine which order to schedule 
 #	           compilations.  You should not need to do this unless
@@ -53,7 +53,7 @@ parser.ml parser.mli: parser.mly
 	@chmod -w $@
 
 # Clean up the directory
-clean::
+clear::
 	rm -rf lexer.ml parser.ml parser.mli *.o *.cmo *.cmi parser.output \
 	   c TAGS *~ 
 
