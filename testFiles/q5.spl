@@ -1,0 +1,2 @@
+concat {"a"} (gen {"a","b","c"} 2) 5
+END
