@@ -40,7 +40,6 @@ expr: WORD						{ MtWord $1 }
 	| INSEC expr expr expr		{ MtOpp ($2,$3,$4,MachInsec) }
 	| CONCAT expr expr expr		{ MtOpp ($2,$3,$4,MachConcat) }
 	| expr STAR expr			{ MtOpp ($1,MtLang [],$3,MachStar) }
-
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }
 	| LBEGIN stringexpr LEND	{ MtLang $2 }
