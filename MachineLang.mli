@@ -1,5 +1,5 @@
 (* Types for opperations *)
-type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat
+type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar
 
 (*Types of machineLang *)
 type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType

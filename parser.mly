@@ -39,7 +39,7 @@ expr: WORD						{ MtWord $1 }
 	| UNION expr expr expr		{ MtOpp ($2,$3,$4,MachUnion) }
 	| INSEC expr expr expr		{ MtOpp ($2,$3,$4,MachInsec) }
 	| CONCAT expr expr expr		{ MtOpp ($2,$3,$4,MachConcat) }
-	| expr STAR					{ MtOpp ($1,MachStar) }
+	| expr STAR expr			{ MtOpp ($1,MtLang [],$3,MachStar) }
 
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }
