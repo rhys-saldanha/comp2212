@@ -1,2 +1,2 @@
-concat {"b"} {"a"} * 6 6
+concat {"b"} ({"a"} * 6) 6
 END
