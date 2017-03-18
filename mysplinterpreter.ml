@@ -33,9 +33,9 @@ let _ =
 			let line = input_line file in
 			let parsed = parseProgram line in
 			let _ = typeProg parsed	in
-			print_string "Program Type Checked\n";
+			print_string "Program Type\t\t==> Checked\n";
 			let result3 = bigEval parsed in
-			let () = print_string "Program Evaluated using big step semantics to ==> " ;  print_res result3 ; print_newline() in
+			let () = print_string "Program Evaluated\t==> " ;  print_res result3 ; print_newline() in
 				flush stdout
 		done
 	with End_of_file -> exit 0

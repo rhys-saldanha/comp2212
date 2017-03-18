@@ -1,5 +1,6 @@
 exception LookupError ;;
 exception TypeError of string;;
+exception InputError of string;;
 exception Terminated ;;
 exception StuckTerm ;;
 exception NonBaseTypeResult;;
@@ -47,7 +48,8 @@ let typeToString x = match x with
 	| _ -> "Unknown type"
 ;;
 
-let makeTypeError x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
+let makeTypeError3 x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
+let makeTypeError2 x y = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ")";;
 
 (* Function to add entry to enviroment *)
 let rec typeOf e = match e with
@@ -59,22 +61,27 @@ let rec typeOf e = match e with
 			| MachPrefix ->
 				( match (typeOf a),(typeOf b),(typeOf n) with
 					| MachWord, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("Prefix was expecting (Word, Language, Int), received \n" ^ makeTypeError x y z))
+					| x,y,z -> raise (TypeError ("prefix was expecting (Word, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachUnion ->
 				( match (typeOf a),(typeOf b),(typeOf n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("Union was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+					| x,y,z -> raise (TypeError ("union was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachInsec ->
 				( match (typeOf a),(typeOf b),(typeOf n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("Insec was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+					| x,y,z -> raise (TypeError ("insec was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachConcat ->
 				( match (typeOf a),(typeOf b),(typeOf n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("Concat was expecting (Language, Language, Int), received \n" ^ makeTypeError x y z))
+					| x,y,z -> raise (TypeError ("concat was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+				)
+			| MachStar ->
+				( match (typeOf a), (typeOf n) with
+					| MachLang, MachInt -> MachLang
+					| x,y -> raise (TypeError ("star was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
 				)
 		)
 ;;
@@ -98,24 +105,55 @@ let tidy_lang l n =
 	sublist (sort_uniq compare l) n
 ;;
 
+(* PREFIX *)
 let comp_prefix w l n =
 	tidy_lang (List.map (fun x -> w^x) l) n
 ;;
+(* ---------- *)
 
+(* UNION *)
 let comp_union l1 l2 n =
 	tidy_lang (l1 @ l2) n
 ;;
+(* ---------- *)
 
-let rec insec l1 l2cl = match l1 with
+(* INSEC *)
+let rec insec l1 l2 = match l1 with
 	| h::t -> (filter (fun x -> x=h) l2) @ insec t l2
 	| [] -> []
 ;;
-
 let comp_insec l1 l2 n = 
 	tidy_lang (insec l1 l2) n
 ;;
+(* ---------- *)
 
-let comp_concat l1 l2 n = l2;;
+(* CONCAT *)
+let rec concat l1 l2 n = match l1 with
+	| h::[] -> (comp_prefix h l2 n)
+	| h::t -> (comp_prefix h l2 n) @ (concat t l2 n)
+	| [] -> l2
+;;
+let comp_concat l1 l2 n = tidy_lang (concat l1 l2 n) n;;
+(* ---------- *)
+
+(* STAR *)
+let rec repeat w n = match n with
+	| 0 -> ""
+	| _ -> w ^ (repeat w (n-1))
+;;
+let rec star w n = match n with
+	| 0 -> [""]
+	| _ -> (repeat w n) :: (star w (n-1))
+;;
+let rec starAll l n = match l with
+	| h::t -> (star h n) @ (starAll t n)
+	| [] -> []
+;;
+let comp_star l n = match l with
+	| _::[] -> tidy_lang (starAll l n) n
+	| _ -> raise (InputError "Kleene-star opperation requires non-empty language")
+;;
+(* ---------- *)
 
 let rec bigEval e = match e with
 	| e when (isValue e) -> e
@@ -125,6 +163,7 @@ let rec bigEval e = match e with
 			| MtLang(l1),MtLang(l2),MtNum(n),MachUnion -> MtLang(comp_union l1 l2 n)
 			| MtLang(l1),MtLang(l2),MtNum(n),MachInsec -> MtLang(comp_insec l1 l2 n)
 			| MtLang(l1),MtLang(l2),MtNum(n),MachConcat -> MtLang(comp_concat l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtNum(n),MachStar -> MtLang(comp_star l1 n)
 			| _ -> raise StuckTerm
 		)
 	| _ -> raise StuckTerm
@@ -132,6 +171,7 @@ let rec bigEval e = match e with
 
 let rec print_list l = match l with 
 	| [] -> print_string ""
+	| ""::t -> print_list (":"::t)
 	| h::[] -> print_string h
 	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
