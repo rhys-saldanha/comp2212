@@ -128,22 +128,27 @@ let comp_insec l1 l2 n =
 (* ---------- *)
 
 (* CONCAT *)
-let comp_concat l1 l2 n = l2;;
+let rec concat l1 l2 n = match l1 with
+	| h::[] -> (comp_prefix h l2 n)
+	| h::t -> (comp_prefix h l2 n) @ (concat t l2 n)
+	| [] -> l2
+;;
+let comp_concat l1 l2 n = tidy_lang (concat l1 l2 n) n;;
 (* ---------- *)
 
 (* STAR *)
 let rec repeat w n = match n with
 	| 0 -> ""
-	| _ -> w ^ (repeat w (n-1));;
-
+	| _ -> w ^ (repeat w (n-1))
+;;
 let rec star w n = match n with
-	| 0 -> []
-	| _ -> (repeat w n) :: (star w (n-1));;
-
+	| 0 -> [""]
+	| _ -> (repeat w n) :: (star w (n-1))
+;;
 let rec starAll l n = match l with
 	| h::t -> (star h n) @ (starAll t n)
 	| [] -> []
-
+;;
 let comp_star l n = match l with
 	| _::[] -> tidy_lang (starAll l n) n
 	| _ -> raise (InputError "Kleene-star opperation requires non-empty language")
@@ -166,6 +171,7 @@ let rec bigEval e = match e with
 
 let rec print_list l = match l with 
 	| [] -> print_string ""
+	| ""::t -> print_list (":"::t)
 	| h::[] -> print_string h
 	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
