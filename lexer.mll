@@ -13,7 +13,10 @@ rule lexer_main = parse
 	| '}'									{ LEND }
 	| ','									{ COMMA }
 	| ['"']['a'-'z']+['"'] as lxm 			{ WORD (global_replace (regexp "\"") "" lxm) }
-	| '*'									{ STAR }
+	| ['\'']['a'-'z']+['\''] as lxm			{ VAR (global_replace (regexp "'") "" lxm) }
+	| "star"								{ STAR }
+	| "gen"									{ LANGGEN }
+	| "assign"								{ ASSIGN }
 	| "prefix"								{ PREFIX }
 	| "union"								{ UNION }
 	| "insec"								{ INSEC }

@@ -10,7 +10,7 @@ open List;;
 open String;;
 
 (* Types for opperations *)
-type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar
+type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
 
 (*Types of machineLang *)
 type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
@@ -19,6 +19,8 @@ type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
 type machTerm = MtNum of int
 	| MtWord of string
 	| MtLang of string list
+	| MtVar of string
+	| MtAsn of machTerm * machTerm
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 
 let rec isValue e = match e with
@@ -33,60 +35,77 @@ type 'a context = Env of (string * 'a) list
 type typeContext = machType context
 type termContext = machTerm context
 
-let rec lookup env str = match env with
+let mtenv = ref (Env []);;
+
+let rec lookupVal env str = match env with
 	| Env [] -> raise LookupError
-	| Env ((name, item) :: gs) ->
-		( match (name = str) with
-			| true -> item
-			| false -> lookup (Env (gs)) str
+	| Env ((x, e) :: gs) ->
+		( match (x = str) with
+			| true -> e
+			| false -> lookupVal (Env (gs)) str
 		)
 ;;
+(* Function to add an extra entry in to an environment *)
+let addBinding env x e  = match env with 
+      Env(gs) -> mtenv := Env ((x, e) :: gs); e
+;;
+
 let typeToString x = match x with 
 	| MachInt -> "Int"
 	| MachWord -> "Word"
 	| MachLang -> "Language"
 	| _ -> "Unknown type"
 ;;
-
 let makeTypeError3 x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
 let makeTypeError2 x y = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ")";;
 
 (* Function to add entry to enviroment *)
-let rec typeOf e = match e with
+let rec typeOf env e = match e with
 	| MtNum n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
 	| MtOpp (a, b, n, x) ->
 		( match x with
 			| MachPrefix ->
-				( match (typeOf a),(typeOf b),(typeOf n) with
+				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachWord, MachLang, MachInt -> MachLang
 					| x,y,z -> raise (TypeError ("prefix was expecting (Word, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachUnion ->
-				( match (typeOf a),(typeOf b),(typeOf n) with
+				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
 					| x,y,z -> raise (TypeError ("union was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachInsec ->
-				( match (typeOf a),(typeOf b),(typeOf n) with
+				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
 					| x,y,z -> raise (TypeError ("insec was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachConcat ->
-				( match (typeOf a),(typeOf b),(typeOf n) with
+				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
 					| x,y,z -> raise (TypeError ("concat was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachStar ->
-				( match (typeOf a), (typeOf n) with
+				( match (typeOf env a), (typeOf env n) with
 					| MachLang, MachInt -> MachLang
 					| x,y -> raise (TypeError ("star was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
 				)
+			| MachGen ->
+				( match (typeOf env a), (typeOf env n) with
+					| MachLang, MachInt -> MachLang
+					| x,y -> raise (TypeError ("gen was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
+				)
+		)
+	| MtVar (x) -> (try typeOf !mtenv (lookupVal !mtenv x) with LookupError -> raise (TypeError (x ^ " is unbound")))
+	| MtAsn (e1, e2) -> 
+		( match e1 with
+			| MtVar x -> typeOf !mtenv (addBinding !mtenv x e)
+			| _ -> raise (InputError "Variable name not allowed")
 		)
 ;;
 
-let typeProg e = typeOf e ;;
+let typeProg e = typeOf (Env []) e ;;
 
 let rec sublist l n = match l,n with
 	| _, 0 -> []
@@ -95,14 +114,14 @@ let rec sublist l n = match l,n with
 ;;
 
 let rec uniq l = match l with
-	| h::t -> h::uniq(filter (fun x -> x<>h) t)
+	| h::t -> h::uniq(List.filter (fun x -> x<>h) t)
 	| [] -> []
 ;;
 
 let sort_uniq c l = sort c (uniq l);;
 
 let tidy_lang l n = 
-	sublist (sort_uniq compare l) n
+	sublist (sort_uniq String.compare l) n
 ;;
 
 (* PREFIX *)
@@ -119,7 +138,7 @@ let comp_union l1 l2 n =
 
 (* INSEC *)
 let rec insec l1 l2 = match l1 with
-	| h::t -> (filter (fun x -> x=h) l2) @ insec t l2
+	| h::t -> (List.filter (fun x -> x=h) l2) @ insec t l2
 	| [] -> []
 ;;
 let comp_insec l1 l2 n = 
@@ -151,11 +170,35 @@ let rec starAll l n = match l with
 ;;
 let comp_star l n = match l with
 	| _::[] -> tidy_lang (starAll l n) n
-	| _ -> raise (InputError "Kleene-star opperation requires non-empty language")
+	| _ -> raise (InputError "Kleene-star operation requires non-empty language")
+;;
+(* ---------- *)
+
+(* GEN *)
+let checkChar l1 = 
+	let l2 = List.filter (fun x -> (String.length x) = 1) l1 in
+		let r = ((List.length l1) - (List.length l2) = 0) in
+			( match r with
+				| true -> l1
+				| false -> raise (InputError "Language gen operation requires a language of characters")
+			)
+;;
+
+let rec gen l n = match n with 
+	| 0 -> [""]
+	| _ -> 
+		let g = (gen l (n-1)) and r = ref [] in
+			List.iter (fun c -> r := !r @ (List.map (fun w -> c^w) g)) l;
+			!r
+;;
+let comp_gen l1 n =
+	let l = checkChar l1 in
+		gen (sort_uniq String.compare l) n
 ;;
 (* ---------- *)
 
 let rec bigEval e = match e with
+	| MtVar (x) -> lookupVal !mtenv x
 	| e when (isValue e) -> e
 	| MtOpp(e1,e2,i,x) -> let v1 = bigEval e1 and v2 = bigEval e2 and v3 = bigEval i in
 		( match v1,v2,v3,x with
@@ -164,8 +207,10 @@ let rec bigEval e = match e with
 			| MtLang(l1),MtLang(l2),MtNum(n),MachInsec -> MtLang(comp_insec l1 l2 n)
 			| MtLang(l1),MtLang(l2),MtNum(n),MachConcat -> MtLang(comp_concat l1 l2 n)
 			| MtLang(l1),MtLang(l2),MtNum(n),MachStar -> MtLang(comp_star l1 n)
+			| MtLang(l1),MtLang(l2),MtNum(n),MachGen -> MtLang(comp_gen l1 n)
 			| _ -> raise StuckTerm
 		)
+	| MtAsn(MtVar(x), e) -> e
 	| _ -> raise StuckTerm
 ;;
 
@@ -177,7 +222,7 @@ let rec print_list l = match l with
 ;;
 
 let print_res res = match res with
-    | (MtNum n) -> print_int n ; print_string " : Int" 
-	| (MtWord w) -> print_string w; print_string " : Word"
-    | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List"
+    | (MtNum n) -> print_int n ; print_string " : Int\n" 
+	| (MtWord w) -> print_string w; print_string " : Word\n"
+    | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List\n"
     | _ -> raise NonBaseTypeResult
