@@ -35,7 +35,7 @@ let _ =
 			let _ = typeProg parsed	in
 			(* print_string "Program Type\t\t==> Checked\n"; *)
 			let result3 = bigEval parsed in
-			(* print_string "Program Evaluated\t==> " ;   *)
+			(* print_string "Program Evaluated\t==> " ; *)
 			let () = print_res result3 in
 				flush stdout
 		done
