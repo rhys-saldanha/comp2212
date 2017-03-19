@@ -1,0 +1,8 @@
+(open)
+(assign w (readline WORD 0))
+(assign l (readline LANG 1))
+(assign n (readline INT 2))
+(print w)
+(print l)
+(print n)
+END

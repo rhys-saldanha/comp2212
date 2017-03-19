@@ -15,6 +15,11 @@ rule lexer_main = parse
 	| '('									{ PBEGIN }
 	| ')'									{ PEND }
 	| ','									{ COMMA }
+	| "open"								{ OPEN }
+	| "readline"							{ READ }
+	| "INT"									{ INTTYPE }
+	| "WORD"								{ WORDTYPE }
+	| "LANG"								{ LANGTYPE }
 	| "print"								{ PRINT }
 	| "star"								{ STAR }
 	| "gen"									{ LANGGEN }
@@ -24,5 +29,6 @@ rule lexer_main = parse
 	| "insec"								{ INSEC }
 	| "concat"								{ CONCAT }
 	| "END"									{ raise End_of_file }
-	| ['a'-'z']+ as lxm						{ VAR (global_replace (regexp "'") "" lxm) }
+	(* | ['\''] _+ ['\''] as lxm				{ FILE (global_replace (regexp "'") "" lxm) } *)
     | eof      								{ EOL }
+	| ['a'-'z' '0'-'9' 'A'-'Z']+ as lxm		{ VAR lxm }
