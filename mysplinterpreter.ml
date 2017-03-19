@@ -36,7 +36,7 @@ let _ =
 			(* print_string "Program Type\t\t==> Checked\n"; *)
 			let result3 = bigEval parsed in
 			(* print_string "Program Evaluated\t==> " ; *)
-			let () = print_res result3; print_newline () in
+			let () = print_res result3; in
 				flush stdout
 		done
 	with End_of_file -> exit 0
