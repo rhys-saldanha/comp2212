@@ -230,20 +230,24 @@ let comp_open chan =
 
 (* READ *)
 let split c s = 
-	let res = ref [""; ""] in
+	let res = ref [] in
 		let f x =
 			( match x = c with
 				| true -> (res := "" :: !res)
-				| false -> (res := ((List.hd !res)^(String.make 1 x)) :: (List.tl !res))
+				| false ->
+					( match !res with
+						| [] -> (res := (""^(String.make 1 x)) :: [])
+						| _ -> (res := ((List.hd !res)^(String.make 1 x)) :: (List.tl !res))
+					)
 			) in
 				String.iter (fun x -> f x) s;
-				sort_uniq String.compare (sublist !res ((List.length !res) -1))
+				!res;
 ;;
 let comp_read_int n = int_of_string (List.nth !lines n);;
 let comp_read_word n = List.nth !lines n;;
 let comp_read_lang n = (split ',' 
 							(Str.global_replace 
-								(Str.regexp "[' ' '\t' '{' '}']") "" (List.nth !lines n)))
+								(Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n)))
 (* ---------- *)
 
 let rec bigEval e = match e with
@@ -279,9 +283,9 @@ let rec print_list l = match l with
 	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
 let print_mt res = match res with
-    | (MtInt n) -> print_int n ; print_string " : Int\n" 
-	| (MtWord w) -> print_string w; print_string " : Word\n"
-    | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List\n"
+    | (MtInt n) -> print_int n;
+	| (MtWord w) -> print_string w;
+    | (MtLang l) -> print_string "{" ; print_list l ; print_string "}"
     | _ -> raise NonBaseTypeResult
 ;;
 let print_res res = match res with
