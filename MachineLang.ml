@@ -229,29 +229,31 @@ let comp_open chan =
 (* ---------- *)
 
 (* READ *)
+let f r x c =
+	( match x = c with
+		| true -> (r := "" :: !r)
+		| false ->
+			( match !r with
+				| [] -> (r := (""^(String.make 1 x)) :: [])
+				| _ -> (r := ((List.hd !r)^(String.make 1 x)) :: (List.tl !r))
+			)
+	)
+;;
 let split c s = 
 	let res = ref [] in
-		let f x =
-			( match (get (Str.global_replace (Str.regexp "[':']") "" (String.make 1 x)) 0) with
-				| y ->
-					( match y = c with
-						| true -> (res := "" :: !res)
-						| false ->
-							( match !res with
-								| [] -> (res := (""^(String.make 1 y)) :: [])
-								| _ -> (res := ((List.hd !res)^(String.make 1 y)) :: (List.tl !res))
-							)
-					)
-			)
-		in
-		String.iter (fun x -> f x) s;
+		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
+let read_lang n = split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n));;
+
 let comp_read_int n = int_of_string (List.nth !lines n);;
 let comp_read_word n = List.nth !lines n;;
-let comp_read_lang n = (split ',' 
-							(Str.global_replace 
-								(Str.regexp "[' ' '\t' '{' '}']") "" (List.nth !lines n)))
+let comp_read_lang n =
+	( match String.contains (List.nth !lines n) ':' with
+		| false -> read_lang n
+		| true -> read_lang n @ [""]
+	)
+;;
 (* ---------- *)
 
 let rec bigEval e = match e with
