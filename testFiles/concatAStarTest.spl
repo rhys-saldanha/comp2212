@@ -1,2 +1,2 @@
-concat {"b"} ({"a"} * 6) 6
+print concat {"b"} union {"a"} {"b"} 6 0
 END

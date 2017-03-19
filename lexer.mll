@@ -6,12 +6,14 @@
 }
 
 rule lexer_main = parse
-	  [' ' '\t' '(' ')']					{ lexer_main lexbuf }	(* skip blanks *)
+	  [' ' '\t']					{ lexer_main lexbuf }	(* skip blanks *)
 	| ['\n']								{ EOL }
 	| ['0'-'9']+ as lxm 					{ INT (int_of_string lxm) }
 	| ['"']['a'-'z']+['"'] as lxm 			{ WORD (global_replace (regexp "\"") "" lxm) }
 	| '{'									{ LBEGIN }
 	| '}'									{ LEND }
+	| '('									{ PBEGIN }
+	| ')'									{ PEND }
 	| ','									{ COMMA }
 	| "print"								{ PRINT }
 	| "star"								{ STAR }

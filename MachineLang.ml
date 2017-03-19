@@ -127,8 +127,9 @@ let rec uniq l = match l with
 
 let sort_uniq c l = sort c (uniq l);;
 
-let tidy_lang l n = 
-	sublist (sort_uniq String.compare l) n
+let tidy_lang l n = match n < 1 with
+	| true -> sort_uniq String.compare l
+	| false -> sublist (sort_uniq String.compare l) n
 ;;
 
 (* PREFIX *)
