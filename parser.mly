@@ -7,7 +7,7 @@
 %token LBEGIN COMMA LEND ASSIGN
 %token <int> INT
 
-%token PREFIX UNION INSEC CONCAT STAR LANGGEN
+%token PREFIX UNION INSEC CONCAT STAR LANGGEN PRINT
 
 %token WORDTYPE LANGTYPE INTTYPE
 %token FUNCTYPE
@@ -15,7 +15,7 @@
 
 /* lowest precedence */
 
-%nonassoc PREFIX UNION INSEC CONCAT STAR
+%nonassoc PREFIX UNION INSEC CONCAT STAR PRINT
 %nonassoc WORD VAR
 %nonassoc ASSIGN
 
@@ -23,13 +23,7 @@
 
 %start parser_main
 %type <MachineLang.machTerm> parser_main
-%type <MachineLang.machType> type_spec
 %%
-type_spec: FUNCTYPE type_spec type_spec		{ MachFunc ($2, $3) }
-	| WORDTYPE								{ MachWord }
-	| LANGTYPE								{ MachLang }
-	| INTTYPE								{ MachInt }
-;
 
 parser_main: expr EOL { $1 }
 ;
@@ -44,6 +38,7 @@ expr: WORD						{ MtWord $1 }
 	| LANGGEN expr expr			{ MtOpp ($2,MtLang [],$3,MachGen) }
 	| ASSIGN expr expr			{ MtAsn ($2, $3) }
 	| VAR						{ MtVar $1 }
+	| PRINT expr				{ MtPrint $2 }
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }
 	| LBEGIN stringexpr LEND	{ MtLang $2 }

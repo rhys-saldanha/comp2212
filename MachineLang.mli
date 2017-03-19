@@ -2,7 +2,7 @@
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
 
 (*Types of machineLang *)
-type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
+type machType = MachInt | MachWord | MachLang | MachPrint
 
 (* Grammar of machineLang *)
 type machTerm = MtNum of int
@@ -10,6 +10,7 @@ type machTerm = MtNum of int
 	| MtLang of string list
 	| MtVar of string
 	| MtAsn of machTerm * machTerm
+	| MtPrint of machTerm
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	
 val typeProg : machTerm -> machType

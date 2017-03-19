@@ -13,7 +13,7 @@ open String;;
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
 
 (*Types of machineLang *)
-type machType = MachInt | MachWord | MachLang | MachFunc of machType * machType
+type machType = MachInt | MachWord | MachLang | MachPrint
 
 (* Grammar of machineLang *)
 type machTerm = MtNum of int
@@ -21,6 +21,7 @@ type machTerm = MtNum of int
 	| MtLang of string list
 	| MtVar of string
 	| MtAsn of machTerm * machTerm
+	| MtPrint of machTerm
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 
 let rec isValue e = match e with
@@ -35,19 +36,24 @@ type 'a context = Env of (string * 'a) list
 type typeContext = machType context
 type termContext = machTerm context
 
-let mtenv = ref (Env []);;
+let envType = ref (Env []);;
+let envVal = ref (Env []);;
 
-let rec lookupVal env str = match env with
+let rec lookup env str = match env with
 	| Env [] -> raise LookupError
 	| Env ((x, e) :: gs) ->
 		( match (x = str) with
 			| true -> e
-			| false -> lookupVal (Env (gs)) str
+			| false -> lookup (Env (gs)) str
 		)
 ;;
-(* Function to add an extra entry in to an environment *)
-let addBinding env x e  = match env with 
-      Env(gs) -> mtenv := Env ((x, e) :: gs); e
+(* Function to add an extra type entry in to an environment *)
+let addBindingType x t  = match !envType with 
+      Env(gs) -> envType := Env ((x, t) :: gs); t
+	  
+;;(* Function to add an extra value entry in to an environment *)
+let addBindingVal x v  = match !envVal with 
+      Env(gs) -> envVal := Env ((x, v) :: gs); v
 ;;
 
 let typeToString x = match x with 
@@ -97,12 +103,13 @@ let rec typeOf env e = match e with
 					| x,y -> raise (TypeError ("gen was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
 				)
 		)
-	| MtVar (x) -> (try typeOf !mtenv (lookupVal !mtenv x) with LookupError -> raise (TypeError (x ^ " is unbound")))
+	| MtVar (x) -> (try lookup !envType x with LookupError -> raise (TypeError (x ^ " is unbound")))
 	| MtAsn (e1, e2) -> 
 		( match e1 with
-			| MtVar x -> typeOf !mtenv (addBinding !mtenv x e)
+			| MtVar x -> addBindingType x (typeOf env e2)
 			| _ -> raise (InputError "Variable name not allowed")
 		)
+	| MtPrint _ -> MachPrint
 ;;
 
 let typeProg e = typeOf (Env []) e ;;
@@ -198,7 +205,7 @@ let comp_gen l1 n =
 (* ---------- *)
 
 let rec bigEval e = match e with
-	| MtVar (x) -> lookupVal !mtenv x
+	| MtVar (x) -> lookup !envVal x
 	| e when (isValue e) -> e
 	| MtOpp(e1,e2,i,x) -> let v1 = bigEval e1 and v2 = bigEval e2 and v3 = bigEval i in
 		( match v1,v2,v3,x with
@@ -210,7 +217,8 @@ let rec bigEval e = match e with
 			| MtLang(l1),MtLang(l2),MtNum(n),MachGen -> MtLang(comp_gen l1 n)
 			| _ -> raise StuckTerm
 		)
-	| MtAsn(MtVar(x), e) -> e
+	| MtAsn(MtVar(x), v) -> addBindingVal x (bigEval v)
+	| MtPrint x -> MtPrint (bigEval x)
 	| _ -> raise StuckTerm
 ;;
 
@@ -220,9 +228,12 @@ let rec print_list l = match l with
 	| h::[] -> print_string h
 	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
-
-let print_res res = match res with
+let print_mt res = match res with
     | (MtNum n) -> print_int n ; print_string " : Int\n" 
 	| (MtWord w) -> print_string w; print_string " : Word\n"
     | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List\n"
     | _ -> raise NonBaseTypeResult
+;;
+let print_res res = match res with
+	| MtPrint x -> print_mt x
+	| _ -> print_string ""
