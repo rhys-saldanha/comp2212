@@ -231,21 +231,21 @@ let comp_open chan =
 (* READ *)
 let split c s = 
 	let res = ref [] in
-		let f x = let y = ref '' in
-			( match x = ':' with
-				| true -> y := ''
-				| false -> y := x
-			)
-			( match !y = c with
-				| true -> (res := "" :: !res)
-				| false ->
-					( match !res with
-						| [] -> (res := (""^(String.make 1 !y)) :: [])
-						| _ -> (res := ((List.hd !res)^(String.make 1 !y)) :: (List.tl !res))
+		let f x =
+			( match (get (Str.global_replace (Str.regexp "[':']") "" (String.make 1 x)) 0) with
+				| y ->
+					( match y = c with
+						| true -> (res := "" :: !res)
+						| false ->
+							( match !res with
+								| [] -> (res := (""^(String.make 1 y)) :: [])
+								| _ -> (res := ((List.hd !res)^(String.make 1 y)) :: (List.tl !res))
+							)
 					)
-			) in
-				String.iter (fun x -> f x) s;
-				!res;
+			)
+		in
+		String.iter (fun x -> f x) s;
+		!res;
 ;;
 let comp_read_int n = int_of_string (List.nth !lines n);;
 let comp_read_word n = List.nth !lines n;;
