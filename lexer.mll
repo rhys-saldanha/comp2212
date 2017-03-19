@@ -13,6 +13,7 @@ rule lexer_main = parse
 	| '{'									{ LBEGIN }
 	| '}'									{ LEND }
 	| ','									{ COMMA }
+	| "open"								{ OPEN }
 	| "print"								{ PRINT }
 	| "star"								{ STAR }
 	| "gen"									{ LANGGEN }
@@ -22,5 +23,6 @@ rule lexer_main = parse
 	| "insec"								{ INSEC }
 	| "concat"								{ CONCAT }
 	| "END"									{ raise End_of_file }
-	| ['a'-'z']+ as lxm						{ VAR (global_replace (regexp "'") "" lxm) }
+	| ['\''][_]+['\''] as lxm				{ FILE (global_replace (regexp "'") "" lxm) }
+	| ['a'-'z']+ as lxm						{ VAR lxm }
     | eof      								{ EOL }

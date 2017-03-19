@@ -3,11 +3,11 @@
 	open MachineLang
 %}
 
-%token <string> WORD VAR
+%token <string> WORD VAR FILE
 %token LBEGIN COMMA LEND ASSIGN
 %token <int> INT
 
-%token PREFIX UNION INSEC CONCAT STAR LANGGEN PRINT
+%token PREFIX UNION INSEC CONCAT STAR LANGGEN PRINT OPEN
 
 %token WORDTYPE LANGTYPE INTTYPE
 %token FUNCTYPE
@@ -15,8 +15,8 @@
 
 /* lowest precedence */
 
-%nonassoc PREFIX UNION INSEC CONCAT STAR PRINT
-%nonassoc WORD VAR
+%nonassoc PREFIX UNION INSEC CONCAT STAR PRINT OPEN
+%nonassoc WORD VAR FILE
 %nonassoc ASSIGN
 
 /* highest precedence */
@@ -39,6 +39,7 @@ expr: WORD						{ MtWord $1 }
 	| ASSIGN expr expr			{ MtAsn ($2, $3) }
 	| VAR						{ MtVar $1 }
 	| PRINT expr				{ MtPrint $2 }
+	| OPEN FILE					{ MtOpen (MtFile $2) }
 ;
 langexpr: LBEGIN LEND			{ MtLang [] }
 	| LBEGIN stringexpr LEND	{ MtLang $2 }

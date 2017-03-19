@@ -13,16 +13,18 @@ open String;;
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
 
 (*Types of machineLang *)
-type machType = MachInt | MachWord | MachLang | MachPrint
+type machType = MachInt | MachWord | MachLang | MachPrint | MachOpen
 
 (* Grammar of machineLang *)
 type machTerm = MtNum of int
 	| MtWord of string
 	| MtLang of string list
 	| MtVar of string
+	| MtFile of string
+	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	| MtAsn of machTerm * machTerm
 	| MtPrint of machTerm
-	| MtOpp of machTerm * machTerm * machTerm * machOpp
+	| MtOpen of machTerm
 
 let rec isValue e = match e with
 	| MtNum n -> true
@@ -38,6 +40,7 @@ type termContext = machTerm context
 
 let envType = ref (Env []);;
 let envVal = ref (Env []);;
+let fileContent = ref ("");
 
 let rec lookup env str = match env with
 	| Env [] -> raise LookupError
@@ -110,6 +113,7 @@ let rec typeOf env e = match e with
 			| _ -> raise (InputError "Variable name not allowed")
 		)
 	| MtPrint _ -> MachPrint
+	| MtOpen _ -> MachOpen
 ;;
 
 let typeProg e = typeOf (Env []) e ;;
@@ -204,6 +208,18 @@ let comp_gen l1 n =
 ;;
 (* ---------- *)
 
+(* OPEN *)
+let comp_open f =
+	let inChan = open_in f in
+	  let n = in_channel_length inChan in
+	  let s = String.create n in
+	  really_input inChan s 0 n;
+	  close_in ic;
+	  fileContent := s
+;;
+(* ---------- *)
+	
+
 let rec bigEval e = match e with
 	| MtVar (x) -> lookup !envVal x
 	| e when (isValue e) -> e
@@ -219,6 +235,7 @@ let rec bigEval e = match e with
 		)
 	| MtAsn(MtVar(x), v) -> addBindingVal x (bigEval v)
 	| MtPrint x -> MtPrint (bigEval x)
+	| MtOpen (MtFile f) -> comp_open f
 	| _ -> raise StuckTerm
 ;;
 
@@ -237,3 +254,4 @@ let print_mt res = match res with
 let print_res res = match res with
 	| MtPrint x -> print_mt x
 	| _ -> print_string ""
+;;	
