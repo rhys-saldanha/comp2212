@@ -40,7 +40,7 @@ expr: WORD						{ MtWord $1 }
 	| UNION expr expr expr		{ MtOpp ($2,$3,$4,MachUnion) }
 	| INSEC expr expr expr		{ MtOpp ($2,$3,$4,MachInsec) }
 	| CONCAT expr expr expr		{ MtOpp ($2,$3,$4,MachConcat) }
-	| expr STAR expr			{ MtOpp ($1,MtLang [],$3,MachStar) }
+	| STAR expr expr			{ MtOpp ($2,MtLang [],$3,MachStar) }
 	| LANGGEN expr expr			{ MtOpp ($2,MtLang [],$3,MachGen) }
 	| ASSIGN expr expr			{ MtAsn ($2, $3) }
 	| VAR						{ MtVar $1 }
