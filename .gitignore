@@ -29,3 +29,4 @@ parser.mli
 mysplinterpreter
 
 *.ini
+*.DS_Store
