@@ -244,7 +244,10 @@ let split c s =
 		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
-let read_lang n = split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n));;
+let read_lang n = 
+	try 
+		split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n));;
+	with _ -> raise (InputError "line number for readline not found")
 
 let comp_read_int n = int_of_string (List.nth !lines n);;
 let comp_read_word n = List.nth !lines n;;
