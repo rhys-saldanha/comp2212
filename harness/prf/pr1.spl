@@ -1,0 +1,5 @@
+(open)
+(assign l (readline LANG 0))
+(assign n (readline INT 1))
+(print (prefix "a" l n))
+END

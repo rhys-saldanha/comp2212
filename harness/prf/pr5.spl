@@ -1,0 +1,5 @@
+(open)
+(assign l (readline LANG 0))
+(assign n (readline INT 1))
+(print (concat l (gen {"a","b","c"} 2) n))
+END
