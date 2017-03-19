@@ -9,14 +9,14 @@ open Printf;;
 open List;;
 open String;;
 
-(* Types for opperations *)
+(* Types for operations *)
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
 
 (*Types of machineLang *)
-type machType = MachInt | MachWord | MachLang | MachPrint | MachOpen
+type machType = MachInt | MachWord | MachLang | MachNull
 
 (* Grammar of machineLang *)
-type machTerm = MtNum of int
+type machTerm = MtInt of int
 	| MtWord of string
 	| MtLang of string list
 	| MtVar of string
@@ -24,10 +24,13 @@ type machTerm = MtNum of int
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	| MtAsn of machTerm * machTerm
 	| MtPrint of machTerm
-	| MtOpen of machTerm
+	(* | MtOpen of machTerm *)
+	| MtOpen
+	| MtRead of machType * machTerm
+	| MtNull of string
 
 let rec isValue e = match e with
-	| MtNum n -> true
+	| MtInt n -> true
 	| MtWord w -> true
 	| MtLang l -> true
 	| _ -> false
@@ -40,7 +43,7 @@ type termContext = machTerm context
 
 let envType = ref (Env []);;
 let envVal = ref (Env []);;
-let fileContent = ref ("");
+let lines = ref [];;
 
 let rec lookup env str = match env with
 	| Env [] -> raise LookupError
@@ -70,7 +73,7 @@ let makeTypeError2 x y = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ")";
 
 (* Function to add entry to enviroment *)
 let rec typeOf env e = match e with
-	| MtNum n -> MachInt
+	| MtInt n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
 	| MtOpp (a, b, n, x) ->
@@ -112,8 +115,11 @@ let rec typeOf env e = match e with
 			| MtVar x -> addBindingType x (typeOf env e2)
 			| _ -> raise (InputError "Variable name not allowed")
 		)
-	| MtPrint _ -> MachPrint
-	| MtOpen _ -> MachOpen
+	| MtPrint _ -> MachNull
+	| MtOpen -> MachNull
+	| MtRead (t,n) -> t
+	| MtFile _ -> raise (InputError "File definition exists outside of an open operation")
+	| MtNull _ -> MachNull
 ;;
 
 let typeProg e = typeOf (Env []) e ;;
@@ -209,33 +215,60 @@ let comp_gen l1 n =
 (* ---------- *)
 
 (* OPEN *)
-let comp_open f =
-	let inChan = open_in f in
-	  let n = in_channel_length inChan in
-	  let s = String.create n in
-	  really_input inChan s 0 n;
-	  close_in ic;
-	  fileContent := s
+let comp_open =
+	let chan = stdin in
+		try
+			while true; do
+				lines := input_line chan :: !lines
+			done; ""
+		with End_of_file ->
+			close_in chan;
+			lines := List.rev !lines;
+			""
 ;;
 (* ---------- *)
-	
+
+(* READ *)
+let split c s = 
+	let res = ref [""; ""] in
+		let f x =
+			( match x = c with
+				| true -> (res := "" :: !res)
+				| false -> (res := ((List.hd !res)^(String.make 1 x)) :: (List.tl !res))
+			) in
+				String.iter (fun x -> f x) s;
+				sort_uniq String.compare (sublist !res ((List.length !res) -1))
+;;
+let comp_read_int n = int_of_string (List.nth !lines n);;
+let comp_read_word n = List.nth !lines n;;
+let comp_read_lang n = (split ',' 
+							(Str.global_replace 
+								(Str.regexp "[' ' '\t' '{' '}']") "" (List.nth !lines n)))
+(* ---------- *)
 
 let rec bigEval e = match e with
 	| MtVar (x) -> lookup !envVal x
 	| e when (isValue e) -> e
 	| MtOpp(e1,e2,i,x) -> let v1 = bigEval e1 and v2 = bigEval e2 and v3 = bigEval i in
 		( match v1,v2,v3,x with
-			| MtWord(w),MtLang(l),MtNum(n),MachPrefix -> MtLang(comp_prefix w l n)
-			| MtLang(l1),MtLang(l2),MtNum(n),MachUnion -> MtLang(comp_union l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtNum(n),MachInsec -> MtLang(comp_insec l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtNum(n),MachConcat -> MtLang(comp_concat l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtNum(n),MachStar -> MtLang(comp_star l1 n)
-			| MtLang(l1),MtLang(l2),MtNum(n),MachGen -> MtLang(comp_gen l1 n)
+			| MtWord(w),MtLang(l),MtInt(n),MachPrefix -> MtLang(comp_prefix w l n)
+			| MtLang(l1),MtLang(l2),MtInt(n),MachUnion -> MtLang(comp_union l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtInt(n),MachInsec -> MtLang(comp_insec l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtInt(n),MachConcat -> MtLang(comp_concat l1 l2 n)
+			| MtLang(l1),MtLang(l2),MtInt(n),MachStar -> MtLang(comp_star l1 n)
+			| MtLang(l1),MtLang(l2),MtInt(n),MachGen -> MtLang(comp_gen l1 n)
 			| _ -> raise StuckTerm
 		)
 	| MtAsn(MtVar(x), v) -> addBindingVal x (bigEval v)
 	| MtPrint x -> MtPrint (bigEval x)
-	| MtOpen (MtFile f) -> comp_open f
+	| MtOpen -> MtNull(comp_open)
+	| MtRead(t,MtInt(n)) ->
+		( match t with
+			| MachInt -> MtInt(comp_read_int n)
+			| MachWord -> MtWord(comp_read_word n)
+			| MachLang -> MtLang(comp_read_lang n)
+			| _ -> raise StuckTerm
+		)
 	| _ -> raise StuckTerm
 ;;
 
@@ -246,7 +279,7 @@ let rec print_list l = match l with
 	| h::t -> print_string h ; print_string ", " ; print_list t
 ;;
 let print_mt res = match res with
-    | (MtNum n) -> print_int n ; print_string " : Int\n" 
+    | (MtInt n) -> print_int n ; print_string " : Int\n" 
 	| (MtWord w) -> print_string w; print_string " : Word\n"
     | (MtLang l) -> print_string "{" ; print_list l ; print_string "} : List\n"
     | _ -> raise NonBaseTypeResult
