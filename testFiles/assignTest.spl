@@ -1,2 +1,5 @@
-assign 'n' 5
+assign n 5
+assign m union {"a"} {"b"} 5
+print n
+print m
 END
