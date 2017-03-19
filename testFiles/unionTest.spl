@@ -1,0 +1,2 @@
+(print (union {"a"} {"b"} 5))
+END

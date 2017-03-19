@@ -31,8 +31,8 @@ parser_main: expr EOL { $1 }
 ;
 expr: WORD						{ MtWord $1 }
 	| langexpr					{ $1 }
-	| INT						{ MtInt $1 }
 	| PBEGIN funcexpr PEND		{ $2 }
+	| INT						{ MtInt $1 }
 	| VAR						{ MtVar $1 }
 	| PRINT expr				{ MtPrint $2 }
 ;
@@ -49,7 +49,7 @@ funcexpr: PREFIX expr expr expr		{ MtOpp ($2,$3,$4,MachPrefix) }
 	| READ typeexpr expr	    	{ MtRead ($2,$3) }
 ;
 langexpr: LBEGIN LEND		    	{ MtLang [] }
-	| LBEGIN stringexpr LEND	{ MtLang $2 }
+	| LBEGIN stringexpr LEND		{ MtLang $2 }
 ;
 typeexpr: INTTYPE				{ MachInt }
 	| WORDTYPE					{ MachWord }

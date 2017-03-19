@@ -8,6 +8,7 @@
 rule lexer_main = parse
 	  [' ' '\t']					{ lexer_main lexbuf }	(* skip blanks *)
 	| ['\n']								{ EOL }
+    | eof      								{ EOL }
 	| ['0'-'9']+ as lxm 					{ INT (int_of_string lxm) }
 	| ['"']['a'-'z']+['"'] as lxm 			{ WORD (global_replace (regexp "\"") "" lxm) }
 	| '{'									{ LBEGIN }
@@ -30,5 +31,4 @@ rule lexer_main = parse
 	| "concat"								{ CONCAT }
 	| "END"									{ raise End_of_file }
 	(* | ['\''] _+ ['\''] as lxm				{ FILE (global_replace (regexp "'") "" lxm) } *)
-    | eof      								{ EOL }
 	| ['a'-'z' '0'-'9' 'A'-'Z']+ as lxm		{ VAR lxm }

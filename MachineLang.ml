@@ -216,16 +216,15 @@ let comp_gen l1 n =
 (* ---------- *)
 
 (* OPEN *)
-let comp_open =
-	let chan = stdin in
-		try
-			while true; do
-				lines := input_line chan :: !lines
-			done; ""
-		with End_of_file ->
-			close_in chan;
-			lines := List.rev !lines;
-			""
+let comp_open chan =
+	try
+		while true; do
+			lines := input_line chan :: !lines
+		done; ""
+	with End_of_file ->
+		close_in chan;
+		lines := List.rev !lines;
+		""
 ;;
 (* ---------- *)
 
@@ -262,7 +261,7 @@ let rec bigEval e = match e with
 		)
 	| MtAsn(MtVar(x), v) -> addBindingVal x (bigEval v)
 	| MtPrint x -> MtPrint (bigEval x)
-	| MtOpen -> MtNull(comp_open)
+	| MtOpen -> MtNull(comp_open stdin)
 	| MtRead(t,MtInt(n)) ->
 		( match t with
 			| MachInt -> MtInt(comp_read_int n)
