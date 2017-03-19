@@ -9,7 +9,7 @@ do
 	echo "*****************"
 	echo "*     pr $i     *"
 	echo "*****************"	
-	prog="pr$i.spl"
+	prog="prf/pr$i.spl"
 	passed=0
 	echo 
 	echo "  ******************************"
