@@ -1,5 +1,0 @@
-assign n 5
-assign m union {"a"} {"b"}
-print n
-print m
-END

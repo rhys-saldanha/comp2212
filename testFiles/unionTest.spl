@@ -1,2 +1,0 @@
-union {"a", "ab"} {"babe"} 5
-END

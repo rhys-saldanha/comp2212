@@ -1,2 +1,0 @@
-(print (concat {"b"} (union {"a"} {"b"} 6) 0))
-END
