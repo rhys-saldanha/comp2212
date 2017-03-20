@@ -2,9 +2,8 @@ exception LookupError ;;
 exception TypeError of string;;
 exception InputError of string;;
 exception EvalError of string;;
-exception Terminated ;;
 exception StuckTerm ;;
-exception NonBaseTypeResult;;
+exception PrintError of string;;
 
 open Printf;;
 open List;;
@@ -63,6 +62,7 @@ let typeToString x = match x with
 	| MachInt -> "Int"
 	| MachWord -> "Word"
 	| MachLang -> "Language"
+	| MachNull -> "Null Type"
 	| _ -> "Unknown type"
 ;;
 let makeTypeError3 x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
@@ -316,7 +316,7 @@ let print_mt res = match res with
     | (MtInt n) -> print_int n;
 	| (MtWord w) -> print_string w;
     | (MtLang l) -> print_string "{" ; print_list l ; print_string "}"
-    | _ -> raise NonBaseTypeResult
+    | _ -> raise (PrintError ("Type '" ^ (typeToString (typeOf res)) ^ "' cannot be printed"))
 ;;
 let print_res res = match res with
 	| MtPrint x -> print_mt x; print_newline ()
