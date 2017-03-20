@@ -248,7 +248,11 @@ let split c s =
 		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
-let read_lang n =	split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n))
+let read_lang n = let s = (List.nth !lines n) in
+	( match (s.[0] = '{'), (s.[(String.length s)-1] = '}') with
+		| true, true -> split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" s)
+		| _ -> raise (InputError ("'" ^ s ^ "' is not a valid language"))
+	)
 ;;
 
 let comp_read_int n = try
