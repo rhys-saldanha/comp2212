@@ -238,11 +238,11 @@ let split c s =
 		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
-let lowercase_list l = List.map (fun x -> String.lowercase x) l
+let tidyInt i = (Str.global_replace (Str.regexp "[^0-9]") "" i)
 ;;
-let removeChars l = List.map ( fun x -> (Str.global_replace (Str.regexp "[^a-z]") "" x)) l
+let tidyWord w = (Str.global_replace (Str.regexp "[^a-z]") "" (String.lowercase w))
 ;;
-let tidyList l = removeChars (lowercase_list l)
+let tidyList l = List.map (fun x -> tidyWord x) l
 ;;
 let read_lang n = let s = (List.nth !lines n) in
 	( match (s.[0] = '{'), (s.[(String.length s)-1] = '}') with
@@ -250,20 +250,6 @@ let read_lang n = let s = (List.nth !lines n) in
 		| _ -> raise (InputError ("'" ^ s ^ "' is not a valid language"))
 	)
 ;;
-
-let comp_read_int n = try
-	int_of_string (List.nth !lines n) 
-	with Failure "int_of_string" -> raise (InputError "readline could not parse int from file")
-		| Failure "nth" -> raise (InputError ("line number for readline INT " ^ (string_of_int n) ^ " not found"))
-		| _ -> raise (EvalError ("could not evaluate readline INT " ^ (string_of_int n)))
-;;
-
-let comp_read_word n = try
-	List.nth !lines n
-	with Failure "nth" -> raise (InputError ("line number for readline WORD " ^ (string_of_int n) ^ " not found"))
-		| _ -> raise (EvalError ("could not evaluate readline WORD " ^ (string_of_int n)))
-;;
-
 let comp_read_lang n = try
 	( match String.contains (List.nth !lines n) ':' with
 		| false -> read_lang n
@@ -272,6 +258,18 @@ let comp_read_lang n = try
 	with Failure "nth" -> raise (InputError ("line number for readline LANG " ^ (string_of_int n) ^ " not found"))
 		| InputError x -> raise (InputError x)
 		| _ -> raise (EvalError ("could not evaluate readline LANG " ^ (string_of_int n)))
+;;
+
+let comp_read_int n = try
+	int_of_string (tidyInt (List.nth !lines n)) 
+	with Failure "int_of_string" -> raise (InputError "readline could not parse int from file")
+		| Failure "nth" -> raise (InputError ("line number for readline INT " ^ (string_of_int n) ^ " not found"))
+		| _ -> raise (EvalError ("could not evaluate readline INT " ^ (string_of_int n)))
+;;
+let comp_read_word n = try
+	tidyWord (List.nth !lines n)
+	with Failure "nth" -> raise (InputError ("line number for readline WORD " ^ (string_of_int n) ^ " not found"))
+		| _ -> raise (EvalError ("could not evaluate readline WORD " ^ (string_of_int n)))
 ;;
 (* ---------- *)
 
