@@ -56,6 +56,9 @@ parser.ml parser.mli: parser.mly
 clear::
 	rm -rf lexer.ml parser.ml parser.mli *.o *.cmo *.cmi parser.output \
 	   c TAGS *~ 
+clean::
+	rm -rf lexer.ml parser.ml parser.mli *.o *.cmo *.cmi parser.output \
+	   c TAGS *~ 
 
 # Rebuild intermodule dependencies
 depend:: $(DEPEND) 
