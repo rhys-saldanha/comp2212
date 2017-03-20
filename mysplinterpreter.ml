@@ -25,9 +25,9 @@ let _ =
 				flush stdout
 		done
 	with End_of_file -> exit 0
-		| TypeError x -> prerr_string ("Type Error : " ^ x)
-		| InputError x -> prerr_string ("Input Error : " ^ x)
-		| EvalError x -> prerr_string ("Evaluation Error : " ^ x)
-		| StuckTerm -> prerr_string ("Unexpected evaluation, report to dev team")
-		| PrintError x -> prerr_string ("Print Error : " ^ x)
+		| TypeError x -> prerr_string ("Type Error : " ^ x); prerr_newline ()
+		| InputError x -> prerr_string ("Input Error : " ^ x); prerr_newline ()
+		| EvalError x -> prerr_string ("Evaluation Error : " ^ x); prerr_newline ()
+		| StuckTerm -> prerr_string ("Unexpected evaluation, report to dev team"); prerr_newline ()
+		| PrintError x -> prerr_string ("Print Error : " ^ x); prerr_newline ()
 		
