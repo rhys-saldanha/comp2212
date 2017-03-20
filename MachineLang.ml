@@ -238,9 +238,15 @@ let split c s =
 		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
+let lowercase_list l = List.map (fun x -> String.lowercase x) l
+;;
+let removeChars l = List.map ( fun x -> (Str.global_replace (Str.regexp "[^a-z]") "" x)) l
+;;
+let tidyList l = removeChars (lowercase_list l)
+;;
 let read_lang n = let s = (List.nth !lines n) in
 	( match (s.[0] = '{'), (s.[(String.length s)-1] = '}') with
-		| true, true -> split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" s)
+		| true, true -> tidyList (split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" s))
 		| _ -> raise (InputError ("'" ^ s ^ "' is not a valid language"))
 	)
 ;;
