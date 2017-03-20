@@ -274,6 +274,7 @@ let comp_read_lang n = try
 		| true -> read_lang n @ [""]
 	)
 	with Failure "nth" -> raise (InputError ("line number for readline LANG " ^ (string_of_int n) ^ " not found"))
+		| InputError x -> raise (InputError x)
 		| _ -> raise (EvalError ("could not evaluate readline LANG " ^ (string_of_int n)))
 ;;
 (* ---------- *)
