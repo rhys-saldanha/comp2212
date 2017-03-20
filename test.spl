@@ -1,0 +1,5 @@
+(open)
+(print (readline LANG 0))
+(print (readline INT 1))
+(print (readline WORD 2))
+END
