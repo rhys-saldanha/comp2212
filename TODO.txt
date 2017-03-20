@@ -1,2 +1,0 @@
-TODO
- * Remove MtFile and all other file type relics (comments)
