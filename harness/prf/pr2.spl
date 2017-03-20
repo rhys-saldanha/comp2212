@@ -3,6 +3,6 @@
 (assign l2 (readline LANG 1))
 (assign l3 (readline LANG 2))
 (assign n (readline INT 3))
-(print (union l1 l2 n))
-(print (union l1 l3 n))
+(print (reduce (union l1 l2) n))
+(print (reduce (union l1 l3) n))
 END
