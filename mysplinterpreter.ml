@@ -1,3 +1,9 @@
+exception TypeError of string;;
+exception InputError of string;;
+exception EvalError of string;;
+exception StuckTerm ;;
+exception PrintError of string;;
+
 open MachineLang
 open Lexer
 open Parser

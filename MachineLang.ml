@@ -63,7 +63,6 @@ let typeToString x = match x with
 	| MachWord -> "Word"
 	| MachLang -> "Language"
 	| MachNull -> "Null Type"
-	| _ -> "Unknown type"
 ;;
 let makeTypeError3 x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
 let makeTypeError2 x y = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ")";;
@@ -316,7 +315,7 @@ let print_mt res = match res with
     | (MtInt n) -> print_int n;
 	| (MtWord w) -> print_string w;
     | (MtLang l) -> print_string "{" ; print_list l ; print_string "}"
-    | _ -> raise (PrintError ("Type '" ^ (typeToString (typeOf res)) ^ "' cannot be printed"))
+    | _ -> raise (PrintError ("Type '" ^ (typeToString (typeOf (Env[]) res)) ^ "' cannot be printed"))
 ;;
 let print_res res = match res with
 	| MtPrint x -> print_mt x; print_newline ()
