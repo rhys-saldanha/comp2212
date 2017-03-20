@@ -9,14 +9,14 @@
 %token LEND PEND
 %token <int> INT
 
-%token PREFIX UNION INSEC CONCAT STAR LANGGEN ASSIGN PRINT OPEN READ
+%token PREFIX UNION INSEC CONCAT STAR LANGGEN ASSIGN PRINT OPEN READ REDUCE
 
 %token INTTYPE WORDTYPE LANGTYPE
 %token EOL
 
 /* lowest precedence */
 
-%nonassoc PREFIX UNION INSEC CONCAT STAR PRINT OPEN
+%nonassoc PREFIX UNION INSEC CONCAT STAR PRINT OPEN READ REDUCE
 %nonassoc WORD VAR
 %nonassoc ASSIGN
 
@@ -36,19 +36,20 @@ expr: WORD						{ MtWord $1 }
 	| VAR						{ MtVar $1 }
 	| PRINT expr				{ MtPrint $2 }
 ;
-funcexpr: PREFIX expr expr expr		{ MtOpp ($2,$3,$4,MachPrefix) }
-	| UNION expr expr expr			{ MtOpp ($2,$3,$4,MachUnion) }
-	| INSEC expr expr expr			{ MtOpp ($2,$3,$4,MachInsec) }
-	| CONCAT expr expr expr			{ MtOpp ($2,$3,$4,MachConcat) }
-	| STAR expr expr				{ MtOpp ($2,MtLang [],$3,MachStar) }
-	| LANGGEN expr expr				{ MtOpp ($2,MtLang [],$3,MachGen) }
-	| ASSIGN expr expr				{ MtAsn ($2, $3) }
-	| PRINT expr					{ MtPrint $2 }
-	| OPEN						    { MtOpen }
-	| READ typeexpr expr	    	{ MtRead ($2,$3) }
+funcexpr: PREFIX expr expr 		{ MtOpp ($2,$3,MachPrefix) }
+	| UNION expr expr 			{ MtOpp ($2,$3,MachUnion) }
+	| INSEC expr expr 			{ MtOpp ($2,$3,MachInsec) }
+	| CONCAT expr expr 			{ MtOpp ($2,$3,MachConcat) }
+	| STAR expr expr			{ MtOpp ($2,$3,MachStar) }
+	| LANGGEN expr expr			{ MtOpp ($2,$3,MachGen) }
+	| REDUCE expr expr			{ MtOpp ($2,$3,MachReduc) }
+	| ASSIGN expr expr			{ MtAsn ($2,$3) }
+	| PRINT expr				{ MtPrint $2 }
+	| OPEN						{ MtOpen }
+	| READ typeexpr expr	    { MtRead ($2,$3) }
 ;
-langexpr: LBEGIN LEND		    	{ MtLang [] }
-	| LBEGIN stringexpr LEND		{ MtLang $2 }
+langexpr: LBEGIN LEND		    { MtLang [] }
+	| LBEGIN stringexpr LEND	{ MtLang $2 }
 ;
 typeexpr: INTTYPE				{ MachInt }
 	| WORDTYPE					{ MachWord }

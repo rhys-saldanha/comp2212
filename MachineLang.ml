@@ -11,7 +11,7 @@ open List;;
 open String;;
 
 (* Types for operations *)
-type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen
+type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen | MachReduc
 
 (*Types of machineLang *)
 type machType = MachInt | MachWord | MachLang | MachNull
@@ -21,7 +21,7 @@ type machTerm = MtInt of int
 	| MtWord of string
 	| MtLang of string list
 	| MtVar of string
-	| MtOpp of machTerm * machTerm * machTerm * machOpp
+	| MtOpp of machTerm * machTerm * machOpp
 	| MtAsn of machTerm * machTerm
 	| MtPrint of machTerm
 	| MtOpen
@@ -67,46 +67,52 @@ let typeToString x = match x with
 ;;
 let makeTypeError3 x y z = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ", " ^ (typeToString z) ^ ")";;
 let makeTypeError2 x y = "(" ^ (typeToString x) ^ ", " ^ (typeToString y) ^ ")";;
+let makeTypeError1 x = "(" ^ (typeToString x) ^ ")";;
 
 (* Function to add entry to enviroment *)
 let rec typeOf env e = match e with
 	| MtInt n -> MachInt
 	| MtWord w -> MachWord
 	| MtLang l -> MachLang
-	| MtOpp (a, b, n, x) ->
+	| MtOpp (a, b, x) ->
 		( match x with
 			| MachPrefix ->
-				( match (typeOf env a),(typeOf env b),(typeOf env n) with
-					| MachWord, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("prefix was expecting \n\t (Word, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+				( match (typeOf env a),(typeOf env b) with
+					| MachWord, MachLang -> MachLang
+					| x,y -> raise (TypeError ("\nprefix was expecting \n\t(Word, Language)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 			| MachUnion ->
-				( match (typeOf env a),(typeOf env b),(typeOf env n) with
-					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("union was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+				( match (typeOf env a),(typeOf env b) with
+					| MachLang, MachLang -> MachLang
+					| x,y -> raise (TypeError ("union was expecting \n\t(Language, Language)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 			| MachInsec ->
-				( match (typeOf env a),(typeOf env b),(typeOf env n) with
-					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("insec was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+				( match (typeOf env a),(typeOf env b) with
+					| MachLang, MachLang -> MachLang
+					| x,y -> raise (TypeError ("insec was expecting \n\t(Language, Language)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 			| MachConcat ->
-				( match (typeOf env a),(typeOf env b),(typeOf env n) with
-					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("concat was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+				( match (typeOf env a),(typeOf env b) with
+					| MachLang, MachLang -> MachLang
+					| x,y -> raise (TypeError ("concat was expecting \n\t(Language, Language)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 			| MachStar ->
-				( match (typeOf env a), (typeOf env n) with
+				( match (typeOf env a), (typeOf env b) with
 					| MachLang, MachInt -> MachLang
-					| x,y -> raise (TypeError ("star was expecting \n\t (Language, Int), received \n\t" ^ makeTypeError2 x y))
+					| x,y -> raise (TypeError ("star was expecting \n\t Language, Int)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 			| MachGen ->
-				( match (typeOf env a), (typeOf env n) with
+				( match (typeOf env a), (typeOf env b) with
 					| MachLang, MachInt -> MachLang
-					| x,y -> raise (TypeError ("gen was expecting \n\t (Language, Int), received \n\t" ^ makeTypeError2 x y))
+					| x,y -> raise (TypeError ("gen was expecting \n\t(Language, Int)\nreceived \n\t" ^ makeTypeError2 x y))
+				)
+			| MachReduc ->
+				( match (typeOf env a), (typeOf env b) with
+					| MachLang, MachInt -> MachLang
+					| x,y -> raise (TypeError ("reduce was expecting \n\t(Language, Int)\nreceived \n\t" ^ makeTypeError2 x y))
 				)
 		)
-	| MtVar (x) -> (try lookup !envType x with LookupError -> raise (TypeError (x ^ " is unbound")))
+	| MtVar (x) -> (try lookup !envType x with LookupError -> raise (TypeError ("Variable " ^ x ^ " is unbound")))
 	| MtAsn (e1, e2) -> 
 		( match e1 with
 			| MtVar x -> addBindingType x (typeOf env e2)
@@ -120,6 +126,7 @@ let rec typeOf env e = match e with
 
 let typeProg e = typeOf (Env []) e ;;
 
+(* REDUCE *)
 let rec sublist l n = match l,n with
 	| _, 0 -> []
 	| h::t, _ -> h::sublist t (n-1)
@@ -131,22 +138,23 @@ let rec uniq l = match l with
 	| [] -> []
 ;;
 
-let sort_uniq c l = sort c (uniq l);;
+let sort_uniq l = sort String.compare (uniq l);;
 
-let tidy_lang l n = match n < 1 with
-	| true -> sort_uniq String.compare l
-	| false -> sublist (sort_uniq String.compare l) n
+let comp_reduc l n = match n < 1 with
+	| true -> sort_uniq l
+	| false -> sublist (sort_uniq l) n
 ;;
+(* ---------- *)
 
 (* PREFIX *)
-let comp_prefix w l n =
-	tidy_lang (List.map (fun x -> w^x) l) n
+let comp_prefix w l =
+	sort_uniq (List.map (fun x -> w^x) l)
 ;;
 (* ---------- *)
 
 (* UNION *)
-let comp_union l1 l2 n =
-	tidy_lang (l1 @ l2) n
+let comp_union l1 l2 =
+	sort_uniq (l1 @ l2)
 ;;
 (* ---------- *)
 
@@ -155,18 +163,18 @@ let rec insec l1 l2 = match l1 with
 	| h::t -> (List.filter (fun x -> x=h) l2) @ insec t l2
 	| [] -> []
 ;;
-let comp_insec l1 l2 n = 
-	tidy_lang (insec l1 l2) n
+let comp_insec l1 l2 = 
+	sort_uniq (insec l1 l2)
 ;;
 (* ---------- *)
 
 (* CONCAT *)
-let rec concat l1 l2 n = match l1 with
-	| h::[] -> (comp_prefix h l2 n)
-	| h::t -> (comp_prefix h l2 n) @ (concat t l2 n)
+let rec concat l1 l2 = match l1 with
+	| h::[] -> (comp_prefix h l2)
+	| h::t -> (comp_prefix h l2) @ (concat t l2)
 	| [] -> l2
 ;;
-let comp_concat l1 l2 n = tidy_lang (concat l1 l2 n) n;;
+let comp_concat l1 l2 = sort_uniq (concat l1 l2);;
 (* ---------- *)
 
 (* STAR *)
@@ -183,7 +191,7 @@ let rec starAll l n = match l with
 	| [] -> []
 ;;
 let comp_star l n = match l with
-	| _::[] -> tidy_lang (starAll l n) n
+	| _::[] -> comp_reduc (starAll l n) n
 	| _ -> raise (InputError "Kleene-star operation requires non-empty language")
 ;;
 (* ---------- *)
@@ -207,7 +215,7 @@ let rec gen l n = match n with
 ;;
 let comp_gen l1 n =
 	let l = checkChar l1 in
-		gen (sort_uniq String.compare l) n
+		gen (sort_uniq l) n
 ;;
 (* ---------- *)
 
@@ -269,14 +277,15 @@ let comp_read_lang n = try
 let rec bigEval e = match e with
 	| MtVar (x) -> lookup !envVal x
 	| e when (isValue e) -> e
-	| MtOpp(e1,e2,i,x) -> let v1 = bigEval e1 and v2 = bigEval e2 and v3 = bigEval i in
-		( match v1,v2,v3,x with
-			| MtWord(w),MtLang(l),MtInt(n),MachPrefix -> MtLang(comp_prefix w l n)
-			| MtLang(l1),MtLang(l2),MtInt(n),MachUnion -> MtLang(comp_union l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtInt(n),MachInsec -> MtLang(comp_insec l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtInt(n),MachConcat -> MtLang(comp_concat l1 l2 n)
-			| MtLang(l1),MtLang(l2),MtInt(n),MachStar -> MtLang(comp_star l1 n)
-			| MtLang(l1),MtLang(l2),MtInt(n),MachGen -> MtLang(comp_gen l1 n)
+	| MtOpp(e1,e2,x) -> let v1 = bigEval e1 and v2 = bigEval e2 in
+		( match v1,v2,x with
+			| MtWord(w),MtLang(l),MachPrefix -> MtLang(comp_prefix w l)
+			| MtLang(l1),MtLang(l2),MachUnion -> MtLang(comp_union l1 l2)
+			| MtLang(l1),MtLang(l2),MachInsec -> MtLang(comp_insec l1 l2)
+			| MtLang(l1),MtLang(l2),MachConcat -> MtLang(comp_concat l1 l2)
+			| MtLang(l1),MtInt(n),MachStar -> MtLang(comp_star l1 n)
+			| MtLang(l1),MtInt(n),MachGen -> MtLang(comp_gen l1 n)
+			| MtLang(l1),MtInt(n),MachReduc -> MtLang(comp_reduc l1 n)
 			| _ -> raise StuckTerm
 		)
 	| MtAsn(MtVar(x), v) -> addBindingVal x (bigEval v)

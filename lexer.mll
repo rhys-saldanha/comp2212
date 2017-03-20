@@ -18,6 +18,7 @@ rule lexer_main = parse
 	| ','									{ COMMA }
 	| "open"								{ OPEN }
 	| "readline"							{ READ }
+	| "reduce"								{ REDUCE }
 	| "INT"									{ INTTYPE }
 	| "WORD"								{ WORDTYPE }
 	| "LANG"								{ LANGTYPE }
