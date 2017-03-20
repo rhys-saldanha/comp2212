@@ -1,6 +1,7 @@
 exception LookupError ;;
 exception TypeError of string;;
 exception InputError of string;;
+exception EvalError of string;;
 exception Terminated ;;
 exception StuckTerm ;;
 exception NonBaseTypeResult;;
@@ -20,11 +21,9 @@ type machTerm = MtInt of int
 	| MtWord of string
 	| MtLang of string list
 	| MtVar of string
-	| MtFile of string
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	| MtAsn of machTerm * machTerm
 	| MtPrint of machTerm
-	(* | MtOpen of machTerm *)
 	| MtOpen
 	| MtRead of machType * machTerm
 	| MtNull of string
@@ -38,8 +37,6 @@ let rec isValue e = match e with
 
 (* Type of Environments *)
 type 'a context = Env of (string * 'a) list
-type typeContext = machType context
-type termContext = machTerm context
 
 let envType = ref (Env []);;
 let envVal = ref (Env []);;
@@ -81,44 +78,43 @@ let rec typeOf env e = match e with
 			| MachPrefix ->
 				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachWord, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("prefix was expecting (Word, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+					| x,y,z -> raise (TypeError ("prefix was expecting \n\t (Word, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachUnion ->
 				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("union was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+					| x,y,z -> raise (TypeError ("union was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachInsec ->
 				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("insec was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+					| x,y,z -> raise (TypeError ("insec was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachConcat ->
 				( match (typeOf env a),(typeOf env b),(typeOf env n) with
 					| MachLang, MachLang, MachInt -> MachLang
-					| x,y,z -> raise (TypeError ("concat was expecting (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
+					| x,y,z -> raise (TypeError ("concat was expecting \n\t (Language, Language, Int), received \n\t" ^ makeTypeError3 x y z))
 				)
 			| MachStar ->
 				( match (typeOf env a), (typeOf env n) with
 					| MachLang, MachInt -> MachLang
-					| x,y -> raise (TypeError ("star was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
+					| x,y -> raise (TypeError ("star was expecting \n\t (Language, Int), received \n\t" ^ makeTypeError2 x y))
 				)
 			| MachGen ->
 				( match (typeOf env a), (typeOf env n) with
 					| MachLang, MachInt -> MachLang
-					| x,y -> raise (TypeError ("gen was expecting (Language, Int), received \n\t" ^ makeTypeError2 x y))
+					| x,y -> raise (TypeError ("gen was expecting \n\t (Language, Int), received \n\t" ^ makeTypeError2 x y))
 				)
 		)
 	| MtVar (x) -> (try lookup !envType x with LookupError -> raise (TypeError (x ^ " is unbound")))
 	| MtAsn (e1, e2) -> 
 		( match e1 with
 			| MtVar x -> addBindingType x (typeOf env e2)
-			| _ -> raise (InputError "Variable name not allowed")
+			| _ -> raise (InputError "Variable name not allowed (are you assigning a value to another value?)")
 		)
-	| MtPrint _ -> MachNull
+	| MtPrint (x) -> ignore (typeOf env x); MachNull
 	| MtOpen -> MachNull
 	| MtRead (t,n) -> t
-	| MtFile _ -> raise (InputError "File definition exists outside of an open operation")
 	| MtNull _ -> MachNull
 ;;
 
@@ -244,18 +240,29 @@ let split c s =
 		(String.iter (fun x -> f res x c) s);
 		!res;
 ;;
-let read_lang n = 
-	try 
-		split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n));
-	with _ -> raise (InputError "line number for readline not found")
+let read_lang n =	split ',' (Str.global_replace (Str.regexp "[' ' '\t' '{' '}' ':']") "" (List.nth !lines n))
 ;;
-let comp_read_int n = int_of_string (List.nth !lines n);;
-let comp_read_word n = List.nth !lines n;;
-let comp_read_lang n =
+
+let comp_read_int n = try
+	int_of_string (List.nth !lines n) 
+	with Failure "int_of_string" -> raise (InputError "readline could not parse int from file")
+		| Failure "nth" -> raise (InputError ("line number for readline INT " ^ (string_of_int n) ^ " not found"))
+		| _ -> raise (EvalError ("could not evaluate readline INT " ^ (string_of_int n)))
+;;
+
+let comp_read_word n = try
+	List.nth !lines n
+	with Failure "nth" -> raise (InputError ("line number for readline WORD " ^ (string_of_int n) ^ " not found"))
+		| _ -> raise (EvalError ("could not evaluate readline WORD " ^ (string_of_int n)))
+;;
+
+let comp_read_lang n = try
 	( match String.contains (List.nth !lines n) ':' with
 		| false -> read_lang n
 		| true -> read_lang n @ [""]
 	)
+	with Failure "nth" -> raise (InputError ("line number for readline LANG " ^ (string_of_int n) ^ " not found"))
+		| _ -> raise (EvalError ("could not evaluate readline LANG " ^ (string_of_int n)))
 ;;
 (* ---------- *)
 

@@ -44,7 +44,6 @@ funcexpr: PREFIX expr expr expr		{ MtOpp ($2,$3,$4,MachPrefix) }
 	| LANGGEN expr expr				{ MtOpp ($2,MtLang [],$3,MachGen) }
 	| ASSIGN expr expr				{ MtAsn ($2, $3) }
 	| PRINT expr					{ MtPrint $2 }
-	/* | OPEN FILE					{ MtOpen (MtFile $2) } */
 	| OPEN						    { MtOpen }
 	| READ typeexpr expr	    	{ MtRead ($2,$3) }
 ;

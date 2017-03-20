@@ -9,14 +9,13 @@ type machTerm = MtInt of int
 	| MtWord of string
 	| MtLang of string list
 	| MtVar of string
-	| MtFile of string
 	| MtOpp of machTerm * machTerm * machTerm * machOpp
 	| MtAsn of machTerm * machTerm
 	| MtPrint of machTerm
-	(* | MtOpen of machTerm *)
 	| MtOpen
 	| MtRead of machType * machTerm
 	| MtNull of string
+
 	
 val typeProg : machTerm -> machType
 val bigEval : machTerm -> machTerm
