@@ -1,3 +1,9 @@
+exception TypeError of string;;
+exception InputError of string;;
+exception EvalError of string;;
+exception StuckTerm ;;
+exception PrintError of string;;
+
 (* Types for operations *)
 type machOpp = MachUnion | MachPrefix | MachInsec | MachConcat | MachStar | MachGen | MachReduc
 
