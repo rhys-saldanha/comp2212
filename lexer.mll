@@ -10,7 +10,7 @@ rule lexer_main = parse
 	| ['\n']								{ EOL }
     | eof      								{ EOL }
 	| ['0'-'9']+ as lxm 					{ INT (int_of_string lxm) }
-	| ['"']['a'-'z']+['"'] as lxm 			{ WORD (global_replace (regexp "\"") "" lxm) }
+	| ['"']['a'-'z']*['"'] as lxm 			{ WORD (global_replace (regexp "\"") "" lxm) }
 	| '{'									{ LBEGIN }
 	| '}'									{ LEND }
 	| '('									{ PBEGIN }

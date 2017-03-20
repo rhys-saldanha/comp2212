@@ -176,25 +176,6 @@ let rec concat l1 l2 = match l1 with
 let comp_concat l1 l2 = sort_uniq (concat l1 l2);;
 (* ---------- *)
 
-(* STAR *)
-let rec repeat w n = match n with
-	| 0 -> ""
-	| _ -> w ^ (repeat w (n-1))
-;;
-let rec star w n = match n with
-	| 0 -> [""]
-	| _ -> (repeat w n) :: (star w (n-1))
-;;
-let rec starAll l n = match l with
-	| h::t -> (star h n) @ (starAll t n)
-	| [] -> []
-;;
-let comp_star l n = match l with
-	| _::[] -> comp_reduc (starAll l n) n
-	| _ -> raise (InputError "Kleene-star operation requires non-empty language")
-;;
-(* ---------- *)
-
 (* GEN *)
 let checkChar l1 = 
 	let l2 = List.filter (fun x -> (String.length x) = 1) l1 in
@@ -216,6 +197,16 @@ let comp_gen l1 n =
 	let l = checkChar l1 in
 		gen (sort_uniq l) n
 ;;
+(* ---------- *)
+
+(* STAR *)
+let comp_star l n = match l with
+	| [] -> [""]
+	| _ -> let m = ref n and r = ref [] in
+		while (!m > -1) do
+			r := ((gen l !m) @ !r);
+			m := (!m - 1)
+		done; sort_uniq !r
 (* ---------- *)
 
 (* OPEN *)
