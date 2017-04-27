@@ -1,0 +1,8 @@
+(open)
+(assign l1 (readline LANG 0))
+(assign l2 (readline LANG 1))
+(assign l3 (readline LANG 2))
+(assign n (readline INT 3))
+(print (reduce (union (insec l1 l2) l3) n))
+(print (reduce (insec l1 (union l2 l3)) n))
+END

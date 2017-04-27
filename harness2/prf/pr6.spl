@@ -1,0 +1,8 @@
+(open)
+(assign l1 (readline LANG 0))
+(assign l2 (readline LANG 1))
+(assign n (readline INT 2))
+(assign al1 (prefix "a" l1))
+(assign bl2 (prefix "b" l2))
+(print (reduce (union al1 bl2) n))
+END

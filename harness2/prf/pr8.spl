@@ -1,0 +1,6 @@
+(open)
+(assign l1 (readline LANG 0))
+(assign l2 (readline LANG 1))
+(assign n (readline INT 2))
+(print (reduce (prefix "a" (insec l1 l2)) n))
+END
